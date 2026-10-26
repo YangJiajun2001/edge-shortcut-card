@@ -1,5 +1,5 @@
 (() => {
-  const BUILD = '1.2.1';
+  const BUILD = '1.2.2';
   if (window.__ESC_CARD_OVERLAY__ === BUILD) return;
   if (window.__ESC_CARD_OVERLAY__) {
     // 扩展更新后，旧 content script 的上下文可能已经失效；清掉旧节点重新初始化
@@ -450,7 +450,7 @@
     </style>
 
     <div class="card" hidden>
-      <div class="header">
+      <div class="header" title="点击切换展开/收起，拖动移动">
         <div class="brand">
           <span class="logo">⌨</span>
           <span class="brand-title">快捷键</span>
@@ -928,8 +928,9 @@
     }
   }
 
-  // ============ 拖动 ============
+  // ============ 拖动 / 标题栏切换 ============
   let draggingCard = false;
+  let cardMoved = false;
   let cardStartX = 0;
   let cardStartY = 0;
   let cardOriginLeft = 0;
@@ -940,6 +941,7 @@
 
     const rect = card.getBoundingClientRect();
     draggingCard = true;
+    cardMoved = false;
     cardStartX = e.clientX;
     cardStartY = e.clientY;
     cardOriginLeft = rect.left;
@@ -953,6 +955,7 @@
   });
 
   let draggingPill = false;
+  let pillStartX = 0;
   let pillStartY = 0;
   let pillOriginTop = 0;
   let pillMoved = false;
@@ -964,6 +967,7 @@
     const rect = pill.getBoundingClientRect();
     draggingPill = true;
     pillMoved = false;
+    pillStartX = e.clientX;
     pillStartY = e.clientY;
     pillOriginTop = rect.top;
 
@@ -973,6 +977,13 @@
 
   window.addEventListener('mousemove', (e) => {
     if (draggingCard && !card.hidden) {
+      if (
+        Math.abs(e.clientX - cardStartX) > 3 ||
+        Math.abs(e.clientY - cardStartY) > 3
+      ) {
+        cardMoved = true;
+      }
+
       const rect = card.getBoundingClientRect();
       const width = rect.width || 360;
       const height = rect.height || 0;
@@ -989,26 +1000,60 @@
 
     if (draggingPill && !pill.hidden) {
       const height = pill.offsetHeight || 40;
-      if (Math.abs(e.clientY - pillStartY) > 3) pillMoved = true;
+      if (
+        Math.abs(e.clientY - pillStartY) > 3 ||
+        Math.abs(e.clientX - pillStartX) > 3
+      ) {
+        pillMoved = true;
+      }
       const next = clampPosition(0, pillOriginTop + e.clientY - pillStartY, 0, height);
       pill.style.top = next.top + 'px';
     }
   });
 
-  window.addEventListener('mouseup', () => {
+  // 用 capture 监听，保证 pill 自己的 mouseup stopPropagation 不会吃掉这里的位置保存
+  window.addEventListener('mouseup', (e) => {
     if (draggingCard) {
       draggingCard = false;
       if (card.hidden) return;
 
-      const rect = card.getBoundingClientRect();
-      state.geometry.expanded = { left: rect.left, top: rect.top };
-      saveGeometry();
+      if (
+        Math.abs(e.clientX - cardStartX) > 3 ||
+        Math.abs(e.clientY - cardStartY) > 3
+      ) {
+        cardMoved = true;
+      }
+
+      if (cardMoved) {
+        const rect = card.getBoundingClientRect();
+        state.geometry.expanded = { left: rect.left, top: rect.top };
+        saveGeometry();
+        return;
+      }
+
+      // 没有移动：点击标题栏切换展开/收起
+      const rect = header.getBoundingClientRect();
+      const inHeader = (
+        e.clientX >= rect.left &&
+        e.clientX <= rect.right &&
+        e.clientY >= rect.top &&
+        e.clientY <= rect.bottom
+      );
+      if (inHeader) setMode('collapsed', { focus: true });
       return;
     }
 
     if (draggingPill) {
       draggingPill = false;
       if (pill.hidden) return;
+
+      if (
+        Math.abs(e.clientY - pillStartY) > 3 ||
+        Math.abs(e.clientX - pillStartX) > 3
+      ) {
+        pillMoved = true;
+      }
+
       if (pillMoved) {
         const rect = pill.getBoundingClientRect();
         state.geometry.collapsed = { top: rect.top };
@@ -1017,7 +1062,7 @@
         setTimeout(() => { suppressPillClick = false; }, 300);
       }
     }
-  });
+  }, true);
 
   window.addEventListener('resize', () => {
     if (state.mode === 'expanded') applyExpandedGeometry();
