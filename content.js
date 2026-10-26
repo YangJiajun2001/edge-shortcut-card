@@ -1,5 +1,5 @@
 (() => {
-  const BUILD = '1.2.2';
+  const BUILD = '1.3.0';
   if (window.__ESC_CARD_OVERLAY__ === BUILD) return;
   if (window.__ESC_CARD_OVERLAY__) {
     // 扩展更新后，旧 content script 的上下文可能已经失效；清掉旧节点重新初始化
@@ -11,6 +11,7 @@
   const MODE_KEY = 'edgeShortcutCardMode';
   const GEOMETRY_KEY = 'edgeShortcutCardGeometry';
   const SORT_KEY = 'edgeShortcutCardSort';
+  const RECENT_KEY = 'edgeShortcutRecent';
 
   const MODES = ['expanded', 'collapsed', 'hidden'];
   const SORT_ORDER = ['frequency', 'default', 'category'];
@@ -107,9 +108,103 @@
 
     // Edge 特色
     { id: 'collections',    title: '打开集锦',             cat: 'Edge 特色', keys: [['Ctrl', 'Shift', 'Y']] },
-    { id: 'paste-plain',    title: '粘贴为纯文本',         cat: 'Edge 特色', keys: [['Ctrl', 'Shift', 'V']] },
     { id: 'web-capture',    title: '网页捕获',             cat: 'Edge 特色', keys: [['Ctrl', 'Shift', 'S']] },
+
+    // 编辑（输入框上下文）
+    { id: 'paste-plain',    title: '粘贴为纯文本',         cat: '编辑', keys: [['Ctrl', 'Shift', 'V']] },
+    { id: 'edit-copy',      title: '复制',                 cat: '编辑', keys: [['Ctrl', 'C']] },
+    { id: 'edit-paste',     title: '粘贴',                 cat: '编辑', keys: [['Ctrl', 'V']] },
+    { id: 'edit-cut',       title: '剪切',                 cat: '编辑', keys: [['Ctrl', 'X']] },
+    { id: 'edit-undo',      title: '撤销',                 cat: '编辑', keys: [['Ctrl', 'Z']] },
+    { id: 'edit-redo',      title: '重做',                 cat: '编辑', keys: [['Ctrl', 'Y']] },
+    { id: 'edit-select-all', title: '全选',                cat: '编辑', keys: [['Ctrl', 'A']] },
   ];
+
+  const SHORTCUT_BY_ID = new Map(SHORTCUTS.map((item) => [item.id, item]));
+
+  // 口语/英文别名，用于模糊匹配；不直接显示在列表里。
+  const ALIASES = {
+    'tab-new': ['新标签', '新建标签', '开个新页', 'new tab', 'open tab'],
+    'tab-close': ['关标签', '关掉页面', '关闭页面', 'close tab', '关掉标签'],
+    'tab-reopen': ['恢复关闭', '撤销关闭', '找回标签', '重开标签', 'undo close', 'reopen tab'],
+    'tab-next': ['下个标签', '切换下一个', 'next tab'],
+    'tab-prev': ['上个标签', '切换上一个', 'prev tab'],
+    'tab-jump': ['切到第n个', '跳标签', 'jump tab'],
+    'tab-last': ['最后标签', '最后一个', 'last tab'],
+    'tab-duplicate': ['复制标签', '克隆标签', 'duplicate tab'],
+    'tab-mute': ['静音', '取消静音', 'mute', '声音'],
+    'win-new': ['新窗口', '打开窗口', 'new window'],
+    'win-private': ['隐私窗口', '无痕', 'inprivate', 'private window'],
+    'win-close': ['关窗口', '关闭所有', 'close window'],
+    'win-fullscreen': ['全屏', '退出全屏', 'fullscreen'],
+    'win-guest': ['来宾', '访客', '切换用户', 'guest'],
+    'menu-open': ['菜单', '设置', '更多', 'settings', 'menu'],
+    'menu-focus': ['聚焦菜单', '菜单按钮', 'alt menu'],
+    'context-menu': ['右键菜单', '上下文菜单', 'context menu'],
+    'feedback': ['反馈', '意见', 'feedback'],
+    'appbar-focus': ['工具栏', '应用栏', 'app bar'],
+    'nav-back': ['后退', '返回', 'back'],
+    'nav-forward': ['前进', '向前', 'forward'],
+    'nav-refresh': ['刷新', '重载', 'reload', 'refresh'],
+    'nav-hard': ['强制刷新', '清缓存刷新', 'hard reload', '刷新缓存'],
+    'nav-stop': ['停止', '停止加载', 'stop'],
+    'nav-home': ['主页', '首页', 'home'],
+    'page-top': ['页首', '顶部', 'top'],
+    'page-bottom': ['页尾', '底部', 'bottom'],
+    'scroll-down': ['下滚', '向下滚动', '翻页', 'scroll down'],
+    'scroll-up': ['上滚', '向上滚动', 'scroll up'],
+    'url-focus': ['地址栏', '网址栏', '聚焦地址', 'omnibox', 'url'],
+    'url-search': ['搜索地址', '地址栏搜索', 'search bar', '搜索栏'],
+    'url-www': ['补全网址', 'www', 'com', '自动补全'],
+    'url-paste-search': ['粘贴搜索', '粘贴访问', 'paste go', 'paste search'],
+    'sidebar-search': ['侧边栏搜索', '边栏搜索', 'sidebar search'],
+    'page-find': ['查找', '搜索页面', '页内查找', 'find', 'ctrl f'],
+    'page-find-next': ['下一个结果', '继续查找', 'find next'],
+    'page-find-prev': ['上一个结果', 'find previous'],
+    'page-print': ['打印', 'print'],
+    'page-print-system': ['系统打印', '打印对话框', 'system print'],
+    'page-save': ['保存', '另存为', 'save page'],
+    'page-open': ['打开文件', '本地文件', 'open file'],
+    'page-source': ['源代码', '查看源码', 'view source'],
+    'page-help': ['帮助', 'help', 'f1'],
+    'pane-next': ['下一个窗格', '切换窗格', 'next pane'],
+    'pane-prev': ['上一个窗格', 'prev pane'],
+    'pane-web': ['网页窗格', '内容窗格', 'web pane'],
+    'tabstop-next': ['制表位', '下一个焦点', 'tab'],
+    'tabstop-prev': ['上一个焦点', 'shift tab'],
+    'page-caret': ['光标浏览', '插入光标', 'caret'],
+    'zoom-in': ['放大', '变大', 'zoom in'],
+    'zoom-out': ['缩小', '变小', 'zoom out'],
+    'zoom-reset': ['恢复缩放', '原始大小', 'reset zoom'],
+    'pdf-fit': ['pdf适应', '适合页面', '适合宽度', 'fit pdf'],
+    'pdf-rotate-left': ['pdf左转', '逆时针', 'rotate left'],
+    'pdf-rotate-right': ['pdf右转', '顺时针', 'rotate right'],
+    'fav-add': ['收藏', '加书签', 'bookmark', 'star'],
+    'fav-all': ['收藏全部', '所有标签收藏', 'bookmark all'],
+    'fav-open': ['收藏夹', '书签管理', 'favorites'],
+    'fav-first': ['收藏栏第一项', '第一个收藏', 'favorites bar'],
+    'fav-bar': ['收藏栏', '书签栏', 'favorites bar'],
+    'hist-open': ['历史', '历史记录', 'history'],
+    'dl-open': ['下载', '下载内容', 'downloads'],
+    'clear-data': ['清除数据', '清缓存', '删历史', 'clear data', '清浏览数据'],
+    'devtools': ['开发者', '控制台', 'f12', 'devtools', '审查'],
+    'console': ['控制台', 'console', 'js 控制台'],
+    'inspect': ['检查元素', '审查元素', 'inspect'],
+    'read-aloud': ['朗读', '大声朗读', 'read aloud'],
+    'page-reader': ['阅读模式', '沉浸式', 'reader'],
+    'collections': ['集锦', '收藏集', 'collections'],
+    'web-capture': ['截图', '网页截图', '捕获', 'screenshot'],
+    'paste-plain': ['纯文本粘贴', '无格式粘贴', 'paste plain'],
+    'edit-copy': ['复制', '拷贝', 'copy'],
+    'edit-paste': ['粘贴', 'paste'],
+    'edit-cut': ['剪切', 'cut'],
+    'edit-undo': ['撤销', 'undo'],
+    'edit-redo': ['重做', 'redo'],
+    'edit-select-all': ['全选', 'select all'],
+  };
+
+  const RECENT_MAX = 3;
+  const EDIT_CONTEXT_IDS = ['edit-copy', 'edit-paste', 'edit-undo', 'edit-select-all'];
 
   // ============ 状态 ============
   const state = {
@@ -118,6 +213,11 @@
     sortBy: 'frequency',
     stats: {},
     geometry: { expanded: null, collapsed: null },
+    selectedId: null,
+    recent: [],
+    lastEditable: null,
+    captureMode: false,
+    captureKeys: [],
   };
 
   // 清掉旧版本可能残留的网页卡片
@@ -161,6 +261,7 @@
       *, *::before, *::after { box-sizing: border-box; }
 
       .card[hidden], .pill[hidden] { display: none !important; }
+      .recent-row[hidden], .context-bar[hidden], .capture-row[hidden] { display: none !important; }
 
       .card {
         position: fixed;
@@ -268,8 +369,110 @@
 
       .search:focus { border-color: var(--accent); }
       .search::placeholder { color: var(--fg-muted); }
+      .search[readonly] { cursor: default; }
 
       .sort { height: 30px; font-size: 11px; }
+      .capture { width: 30px; padding: 0; font-size: 13px; }
+      .capture.active { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+      .card.capturing .sort { display: none; }
+
+      .recent-row {
+        display: flex;
+        flex: 0 0 auto;
+        align-items: center;
+        gap: 6px;
+        padding: 0 10px 6px;
+        overflow: hidden;
+      }
+
+      .recent-label {
+        flex: 0 0 auto;
+        color: var(--fg-muted);
+        font-size: 9.5px;
+      }
+
+      .recent-chips {
+        display: flex;
+        flex: 1 1 auto;
+        gap: 4px;
+        min-width: 0;
+        overflow: hidden;
+      }
+
+      .recent-chip {
+        max-width: 96px;
+        height: 20px;
+        padding: 0 7px;
+        overflow: hidden;
+        border: 1px solid #d6e7fb;
+        border-radius: 10px;
+        background: var(--accent-soft);
+        color: var(--accent);
+        font: inherit;
+        font-size: 9.5px;
+        font-weight: 600;
+        line-height: 18px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        cursor: pointer;
+      }
+
+      .recent-chip:hover { filter: brightness(.97); }
+
+      .context-bar {
+        display: flex;
+        flex: 0 0 auto;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 10px;
+        border-bottom: 1px solid #d6e7fb;
+        background: #f0f7ff;
+        color: #475569;
+        font-size: 9.5px;
+      }
+
+      .context-label {
+        flex: 0 0 auto;
+        color: var(--accent);
+        font-weight: 700;
+      }
+
+      .context-text {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .capture-row {
+        display: flex;
+        flex: 0 0 auto;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 5px;
+        padding: 0 10px 7px;
+      }
+
+      .capture-hint {
+        flex: 1 1 100%;
+        color: #b45309;
+        font-size: 9px;
+        line-height: 1.35;
+      }
+
+      .special-key {
+        flex: 1 1 auto;
+        min-width: 0;
+        height: 24px;
+        padding: 0 6px;
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        background: var(--bg-soft);
+        color: var(--fg);
+        font: inherit;
+        font-size: 9.5px;
+      }
 
       .list {
         flex: 1 1 auto;
@@ -303,6 +506,10 @@
       }
 
       .item:hover { background: var(--hover); }
+      .item.selected {
+        background: var(--accent-soft);
+        box-shadow: inset 0 0 0 1px var(--accent);
+      }
       .item.flash { animation: escFlash .55s ease-out; }
 
       @keyframes escFlash {
@@ -393,6 +600,7 @@
       .hint-sub { font-size: 9.5px; color: var(--fg-muted); opacity: .85; }
 
       .actions { display: flex; flex: 0 0 auto; gap: 5px; }
+      .actions[hidden] { display: none !important; }
 
       .pill {
         position: fixed;
@@ -461,15 +669,59 @@
 
       <div class="search-row">
         <input class="search" type="text" placeholder="搜索快捷键 / 功能…" spellcheck="false" autocomplete="off" />
+        <button class="btn capture" type="button" title="按组合查（逐键录入）">⌨</button>
         <button class="btn sort" type="button" title="切换排序方式">频率</button>
+      </div>
+
+      <div class="recent-row" hidden>
+        <span class="recent-label">最近</span>
+        <div class="recent-chips"></div>
+      </div>
+
+      <div class="context-bar" hidden>
+        <span class="context-label">输入框</span>
+        <span class="context-text"></span>
+      </div>
+
+      <div class="capture-row" hidden>
+        <span class="capture-hint">逐个按 Ctrl → Shift → T；不要同时按，否则会触发 Edge 快捷键。</span>
+        <select class="special-key" title="特殊键">
+          <option value="">特殊键…</option>
+          <option value="F1">F1</option>
+          <option value="F2">F2</option>
+          <option value="F3">F3</option>
+          <option value="F4">F4</option>
+          <option value="F5">F5</option>
+          <option value="F6">F6</option>
+          <option value="F7">F7</option>
+          <option value="F8">F8</option>
+          <option value="F9">F9</option>
+          <option value="F10">F10</option>
+          <option value="F11">F11</option>
+          <option value="F12">F12</option>
+          <option value="Enter">Enter</option>
+          <option value="Esc">Esc</option>
+          <option value="Tab">Tab</option>
+          <option value="Space">Space</option>
+          <option value="Home">Home</option>
+          <option value="End">End</option>
+          <option value="PgUp">PgUp</option>
+          <option value="PgDn">PgDn</option>
+          <option value="↑">↑</option>
+          <option value="↓">↓</option>
+          <option value="←">←</option>
+          <option value="→">→</option>
+          <option value="Delete">Delete</option>
+        </select>
+        <button class="btn small capture-done" type="button">完成</button>
       </div>
 
       <div class="list"></div>
 
       <div class="footer">
         <div class="hints">
-          <span>Enter 记录首条结果搜索次数</span>
-          <span class="hint-sub">点击条目不计数</span>
+          <span>↑↓ 选择 · Enter 记录选中项</span>
+          <span class="hint-sub">空查询不计数 · 点击条目不计数</span>
         </div>
         <div class="actions">
           <button class="btn small refresh" type="button" title="重新读取搜索次数">刷新</button>
@@ -491,6 +743,17 @@
   const listEl = root.querySelector('.list');
   const searchEl = root.querySelector('.search');
   const sortBtn = root.querySelector('.sort');
+  const captureBtn = root.querySelector('.capture');
+  const recentRow = root.querySelector('.recent-row');
+  const recentChips = root.querySelector('.recent-chips');
+  const contextBar = root.querySelector('.context-bar');
+  const contextText = root.querySelector('.context-text');
+  const captureRow = root.querySelector('.capture-row');
+  const specialKey = root.querySelector('.special-key');
+  const captureDone = root.querySelector('.capture-done');
+  const hintMain = root.querySelector('.hints span:first-child');
+  const hintSub = root.querySelector('.hint-sub');
+  const footerActions = root.querySelector('.actions');
   const collapseBtn = root.querySelector('.collapse');
   const closeBtn = root.querySelector('.close');
   const refreshBtn = root.querySelector('.refresh');
@@ -559,38 +822,142 @@
     return result;
   }
 
-  // ============ 排序 / 过滤 ============
-  function getVisibleList() {
-    const q = state.query.trim().toLowerCase();
-    let arr = SHORTCUTS;
-
-    if (q) {
-      arr = arr.filter((s) => {
-        const keyText = s.keys.map((combo) => combo.join(' ')).join(' ');
-        const hay = `${s.title} ${s.cat} ${keyText}`.toLowerCase();
-        return hay.includes(q);
-      });
-    }
-
-    const cnt = (id) => state.stats[id] || 0;
-
-    if (state.sortBy === 'frequency') {
-      arr = [...arr].sort((a, b) => cnt(b.id) - cnt(a.id) || a.title.localeCompare(b.title, 'zh'));
-    } else if (state.sortBy === 'category') {
-      arr = [...arr].sort((a, b) => a.cat.localeCompare(b.cat, 'zh') || a.title.localeCompare(b.title, 'zh'));
-    }
-
-    return arr;
+  // ============ 排序 / 模糊匹配 ============
+  function normalizeSearchText(value) {
+    return String(value)
+      .toLowerCase()
+      .replace(/[＋+]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
-  // ============ 渲染 ============
+  function keyTextOf(item) {
+    return normalizeSearchText(item.keys.map((combo) => combo.join(' ')).join(' '));
+  }
+
+  function aliasTextOf(item) {
+    return normalizeSearchText((ALIASES[item.id] || []).join(' '));
+  }
+
+  function isSubsequence(needle, haystack) {
+    if (!needle) return true;
+    let index = 0;
+    for (const char of haystack) {
+      if (char === needle[index]) index += 1;
+      if (index >= needle.length) return true;
+    }
+    return false;
+  }
+
+  function scoreShortcut(item, tokens, normalizedQuery) {
+    const title = normalizeSearchText(item.title);
+    const cat = normalizeSearchText(item.cat);
+    const keys = keyTextOf(item);
+    const aliases = aliasTextOf(item);
+    const keyParts = new Set(item.keys.flat().map((key) => normalizeSearchText(key)));
+
+    for (const token of tokens) {
+      const asciiSingle = token.length === 1 && /^[a-z0-9]$/.test(token);
+      const matchedText = title.includes(token) || aliases.includes(token) || cat.includes(token);
+      const matchedKey = keyParts.has(token) || (
+        token.length >= 2 && [...keyParts].some((part) => part.startsWith(token))
+      );
+
+      if (asciiSingle) {
+        if (!matchedKey) return -1;
+        continue;
+      }
+
+      if (
+        !matchedText &&
+        !matchedKey &&
+        !isSubsequence(token, title) &&
+        !isSubsequence(token, aliases) &&
+        !isSubsequence(token, cat)
+      ) {
+        return -1;
+      }
+    }
+
+    let score = 0;
+    if (keys === normalizedQuery) score += 1200;
+    if (title === normalizedQuery) score += 1000;
+    if (title.startsWith(normalizedQuery)) score += 800;
+    if (aliases === normalizedQuery) score += 700;
+    if (keys.includes(normalizedQuery)) score += 650;
+    if (title.includes(normalizedQuery)) score += 550;
+    if (aliases.includes(normalizedQuery)) score += 500;
+    if (cat.includes(normalizedQuery)) score += 180;
+
+    for (const token of tokens) {
+      if (title.includes(token)) score += 70;
+      else if (aliases.includes(token)) score += 55;
+      else if (keyParts.has(token)) score += 45;
+      else if (cat.includes(token)) score += 20;
+      else score += 8;
+    }
+
+    return score;
+  }
+
+  function getVisibleList() {
+    const rawQuery = state.query.trim();
+    const cnt = (id) => state.stats[id] || 0;
+
+    if (!rawQuery) {
+      let arr = SHORTCUTS;
+
+      if (state.sortBy === 'frequency') {
+        arr = [...arr].sort((a, b) => cnt(b.id) - cnt(a.id) || a.title.localeCompare(b.title, 'zh'));
+      } else if (state.sortBy === 'category') {
+        arr = [...arr].sort((a, b) => a.cat.localeCompare(b.cat, 'zh') || a.title.localeCompare(b.title, 'zh'));
+      }
+
+      return arr;
+    }
+
+    const normalizedQuery = normalizeSearchText(rawQuery);
+    const tokens = normalizedQuery.split(' ').filter(Boolean);
+    if (!tokens.length) return SHORTCUTS;
+
+    const sourceIndex = new Map(SHORTCUTS.map((item, index) => [item.id, index]));
+
+    return SHORTCUTS
+      .map((item) => ({ item, score: scoreShortcut(item, tokens, normalizedQuery) }))
+      .filter((entry) => entry.score >= 0)
+      .sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+
+        if (state.sortBy === 'frequency') {
+          const byCount = cnt(b.item.id) - cnt(a.item.id);
+          if (byCount) return byCount;
+        } else if (state.sortBy === 'category') {
+          const byCategory = a.item.cat.localeCompare(b.item.cat, 'zh');
+          if (byCategory) return byCategory;
+        } else {
+          const bySource = sourceIndex.get(a.item.id) - sourceIndex.get(b.item.id);
+          if (bySource) return bySource;
+        }
+
+        return a.item.title.localeCompare(b.item.title, 'zh');
+      })
+      .map((entry) => entry.item);
+  }
+
+  // ============ 渲染 / 选中 ============
   function render(resetScroll = false) {
     const prevScroll = listEl.scrollTop;
     const items = getVisibleList();
+    const ids = new Set(items.map((item) => item.id));
+
+    if (!state.selectedId || !ids.has(state.selectedId)) {
+      state.selectedId = items[0]?.id || null;
+    }
 
     if (!items.length) {
       listEl.innerHTML = '<div class="empty">没有找到匹配的快捷键</div>';
       listEl.scrollTop = 0;
+      updateChromeVisibility();
       return;
     }
 
@@ -598,7 +965,7 @@
     let lastCat = null;
 
     for (const s of items) {
-      if (state.sortBy === 'category' && s.cat !== lastCat) {
+      if (!state.query.trim() && state.sortBy === 'category' && s.cat !== lastCat) {
         html += `<div class="group">${escapeHtml(s.cat)}</div>`;
         lastCat = s.cat;
       }
@@ -610,9 +977,10 @@
         .join('<span class="plus">+</span>');
       const altText = s.keys.slice(1).map((combo) => combo.join(' ')).join(' / ');
       const catText = altText ? `${s.cat} · 备选 ${altText}` : s.cat;
+      const selected = s.id === state.selectedId ? ' selected' : '';
 
       html += `
-        <div class="item" data-id="${s.id}" title="${escapeHtml(s.title)} · ${escapeHtml(catText)}">
+        <div class="item${selected}" data-id="${s.id}" title="${escapeHtml(s.title)} · ${escapeHtml(catText)}">
           <div class="keys">${keyHtml}</div>
           <div class="text">
             <div class="title">${escapeHtml(s.title)}</div>
@@ -624,6 +992,42 @@
 
     listEl.innerHTML = html;
     listEl.scrollTop = resetScroll ? 0 : prevScroll;
+    updateChromeVisibility();
+  }
+
+  function paintSelection(previousId) {
+    if (previousId) {
+      const previous = findItem(previousId);
+      if (previous) previous.classList.remove('selected');
+    }
+
+    const current = findItem(state.selectedId);
+    if (!current) return;
+
+    current.classList.add('selected');
+    current.scrollIntoView({ block: 'nearest' });
+  }
+
+  function moveSelection(delta) {
+    const items = getVisibleList();
+    if (!items.length) return;
+
+    const currentIndex = items.findIndex((item) => item.id === state.selectedId);
+    const nextIndex = currentIndex < 0
+      ? 0
+      : Math.max(0, Math.min(items.length - 1, currentIndex + delta));
+    const previousId = state.selectedId;
+    state.selectedId = items[nextIndex].id;
+    paintSelection(previousId);
+  }
+
+  function selectBoundary(which) {
+    const items = getVisibleList();
+    if (!items.length) return;
+
+    const previousId = state.selectedId;
+    state.selectedId = which === 'start' ? items[0].id : items[items.length - 1].id;
+    paintSelection(previousId);
   }
 
   function updateSortLabel() {
@@ -709,11 +1113,253 @@
     toastEl.classList.remove('show');
   }
 
+  // ============ 最近 / 输入框上下文 ============
+  function normalizeRecent(value) {
+    if (!Array.isArray(value)) return [];
+
+    const result = [];
+    for (const id of value) {
+      if (typeof id === 'string' && SHORTCUT_BY_ID.has(id) && !result.includes(id)) {
+        result.push(id);
+      }
+      if (result.length >= RECENT_MAX) break;
+    }
+    return result;
+  }
+
+  function updateChromeVisibility() {
+    if (state.lastEditable && !state.lastEditable.isConnected) {
+      state.lastEditable = null;
+    }
+
+    const expanded = state.mode === 'expanded';
+    const emptyQuery = !state.query.trim();
+    const showCapture = expanded && state.captureMode;
+
+    captureRow.hidden = !showCapture;
+    recentRow.hidden = !expanded || state.captureMode || !emptyQuery || recentChips.childElementCount === 0;
+    contextBar.hidden = !expanded || state.captureMode || !emptyQuery || !state.lastEditable;
+
+    if (state.captureMode) {
+      hintMain.textContent = 'Backspace 删除上一个 · Enter 完成';
+      hintSub.textContent = 'Esc 退出录入';
+      footerActions.hidden = true;
+    } else {
+      hintMain.textContent = '↑↓ 选择 · Enter 记录选中项';
+      hintSub.textContent = '空查询不计数 · 点击条目不计数';
+      footerActions.hidden = false;
+    }
+  }
+
+  function renderRecent() {
+    recentChips.replaceChildren();
+
+    for (const id of state.recent) {
+      const item = SHORTCUT_BY_ID.get(id);
+      if (!item) continue;
+
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'recent-chip';
+      chip.textContent = item.keys[0].join('+');
+      chip.title = item.title;
+      chip.addEventListener('click', (e) => {
+        e.stopPropagation();
+        jumpToShortcut(id);
+      });
+      recentChips.appendChild(chip);
+    }
+
+    updateChromeVisibility();
+  }
+
+  function jumpToShortcut(id) {
+    const item = findItem(id);
+    if (!item) return;
+
+    const previousId = state.selectedId;
+    state.selectedId = id;
+    paintSelection(previousId);
+    item.scrollIntoView({ block: 'center' });
+    flashItem(id);
+    searchEl.focus();
+  }
+
+  function addRecent(id) {
+    recentVersion += 1;
+    state.recent = [id, ...state.recent.filter((item) => item !== id)].slice(0, RECENT_MAX);
+    renderRecent();
+    chrome.storage.local.set({ [RECENT_KEY]: state.recent }).catch(() => {});
+  }
+
+  function isEditableElement(el) {
+    if (!el || el.nodeType !== 1) return false;
+
+    const tag = el.tagName;
+    if (tag === 'TEXTAREA') return !el.disabled && !el.readOnly;
+    if (tag === 'INPUT') {
+      const type = (el.type || 'text').toLowerCase();
+      const nonTextTypes = [
+        'button', 'checkbox', 'radio', 'submit', 'reset', 'file',
+        'color', 'range', 'image', 'hidden',
+      ];
+      return !nonTextTypes.includes(type) && !el.disabled && !el.readOnly;
+    }
+
+    return el.isContentEditable;
+  }
+
+  function updateContextBar() {
+    if (state.lastEditable && !state.lastEditable.isConnected) {
+      state.lastEditable = null;
+    }
+
+    const text = EDIT_CONTEXT_IDS
+      .map((id) => SHORTCUT_BY_ID.get(id))
+      .filter(Boolean)
+      .map((item) => `${item.keys[0].join('+')} ${item.title}`)
+      .join(' · ');
+
+    contextText.textContent = text;
+    updateChromeVisibility();
+  }
+
+  function handlePageFocus(event) {
+    const target = event.target;
+
+    // 卡片内部的焦点（Shadow DOM 会重定向到 host）不改变页面上下文
+    if (target === host) return;
+
+    state.lastEditable = isEditableElement(target) ? target : null;
+    updateContextBar();
+  }
+
+  // ============ 逐键录入 ============
+  function updateCaptureDisplay() {
+    searchEl.value = state.captureKeys.join(' + ');
+    state.query = state.captureKeys.join(' ');
+    state.selectedId = null;
+    render(true);
+  }
+
+  function resetCaptureState() {
+    state.captureMode = false;
+    state.captureKeys = [];
+    searchEl.readOnly = false;
+    searchEl.placeholder = '搜索快捷键 / 功能…';
+    sortBtn.hidden = false;
+    captureBtn.classList.remove('active');
+    card.classList.remove('capturing');
+  }
+
+  function startCapture() {
+    state.captureMode = true;
+    state.captureKeys = [];
+    state.query = '';
+    state.selectedId = null;
+    searchEl.value = '';
+    searchEl.readOnly = true;
+    searchEl.placeholder = '逐个按键，不要同时按…';
+    sortBtn.hidden = true;
+    captureBtn.classList.add('active');
+    card.classList.add('capturing');
+    updateCaptureDisplay();
+    searchEl.focus();
+  }
+
+  function finishCapture() {
+    if (!state.captureMode) return;
+
+    const keys = state.captureKeys.slice();
+    resetCaptureState();
+    searchEl.value = keys.join(' + ');
+    state.query = keys.join(' ');
+    state.selectedId = null;
+    render(true);
+    searchEl.focus();
+  }
+
+  function exitCapture() {
+    resetCaptureState();
+    searchEl.value = '';
+    state.query = '';
+    state.selectedId = null;
+    render(true);
+    updateChromeVisibility();
+    searchEl.focus();
+  }
+
+  function addCaptureKey(label) {
+    if (!label) return;
+    if (state.captureKeys.length >= 4) {
+      showToast('最多录入 4 个键');
+      return;
+    }
+    if (state.captureKeys.includes(label)) return;
+
+    state.captureKeys.push(label);
+    updateCaptureDisplay();
+  }
+
+  function handleCaptureKey(event) {
+    if (!state.captureMode) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (event.repeat) return;
+
+    if (event.key === 'Escape') {
+      exitCapture();
+      return;
+    }
+    if (event.key === 'Enter') {
+      finishCapture();
+      return;
+    }
+    if (event.key === 'Backspace') {
+      state.captureKeys.pop();
+      updateCaptureDisplay();
+      return;
+    }
+    if (/^F([1-9]|1[0-2])$/.test(event.key)) {
+      showToast('F1–F12 请用特殊键下拉或直接输入');
+      return;
+    }
+
+    const map = {
+      Control: 'Ctrl',
+      Shift: 'Shift',
+      Alt: 'Alt',
+      ArrowUp: '↑',
+      ArrowDown: '↓',
+      ArrowLeft: '←',
+      ArrowRight: '→',
+      Home: 'Home',
+      End: 'End',
+      PageUp: 'PgUp',
+      PageDown: 'PgDn',
+      Tab: 'Tab',
+      Delete: 'Delete',
+      ' ': 'Space',
+    };
+
+    if (map[event.key]) {
+      addCaptureKey(map[event.key]);
+      return;
+    }
+
+    if (event.key.length === 1) {
+      addCaptureKey(event.key.toUpperCase());
+    }
+  }
+
   // ============ 形态 / 位置 ============
   let dataEpoch = 0;
   let modeVersion = 0;
   let sortVersion = 0;
   let geometryVersion = 0;
+  let recentVersion = 0;
 
   function ensureMounted() {
     if (!host.isConnected) {
@@ -789,12 +1435,19 @@
     modeVersion += 1;
     state.mode = next;
 
+    if (next !== 'expanded' && state.captureMode) {
+      resetCaptureState();
+      state.query = '';
+      searchEl.value = '';
+    }
+
     ensureMounted();
     card.hidden = next !== 'expanded';
     pill.hidden = next !== 'collapsed';
 
     if (next === 'expanded') {
       render(false);
+      updateChromeVisibility();
       applyExpandedGeometry();
       if (focus) {
         requestAnimationFrame(() => {
@@ -805,6 +1458,7 @@
     }
 
     searchEl.blur();
+    updateChromeVisibility();
 
     if (next === 'collapsed') {
       hideToast();
@@ -855,6 +1509,7 @@
         ? count
         : (state.stats[target.id] || 0) + 1;
       state.stats[target.id] = Math.max(state.stats[target.id] || 0, next);
+      addRecent(target.id);
 
       if (state.mode === 'expanded') {
         paintCount(target.id);
@@ -908,11 +1563,18 @@
       state.stats = {};
       state.query = '';
       state.sortBy = 'frequency';
+      state.recent = [];
+      state.selectedId = null;
+      recentVersion += 1;
       sortVersion += 1;
       lastRecordAt = 0;
       searchEl.value = '';
       updateSortLabel();
       chrome.storage.local.set({ [SORT_KEY]: state.sortBy }).catch(() => {});
+      chrome.storage.local.set({ [RECENT_KEY]: [] }).catch(() => {});
+      renderRecent();
+
+      if (state.captureMode) resetCaptureState();
 
       if (state.mode === 'expanded') {
         render(true);
@@ -1075,11 +1737,19 @@
   card.addEventListener('wheel', (e) => e.stopPropagation(), { passive: true });
 
   searchEl.addEventListener('input', () => {
+    if (state.captureMode) return;
+
     state.query = searchEl.value;
+    state.selectedId = null;
     render(true);
   });
 
   searchEl.addEventListener('keydown', (e) => {
+    if (state.captureMode) {
+      handleCaptureKey(e);
+      return;
+    }
+
     if (e.isComposing || e.keyCode === 229) return;
 
     if (e.key === 'Enter') {
@@ -1095,7 +1765,22 @@
         return;
       }
 
-      recordSearch(items[0]);
+      const target = items.find((item) => item.id === state.selectedId) || items[0];
+      recordSearch(target);
+      return;
+    }
+
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      e.stopPropagation();
+      moveSelection(e.key === 'ArrowDown' ? 1 : -1);
+      return;
+    }
+
+    if (!state.query.trim() && (e.key === 'Home' || e.key === 'End')) {
+      e.preventDefault();
+      e.stopPropagation();
+      selectBoundary(e.key === 'Home' ? 'start' : 'end');
       return;
     }
 
@@ -1106,6 +1791,7 @@
       if (searchEl.value) {
         searchEl.value = '';
         state.query = '';
+        state.selectedId = null;
         render(true);
       } else {
         setMode('collapsed', { focus: true });
@@ -1143,14 +1829,41 @@
     searchEl.focus();
   });
 
+  captureBtn.addEventListener('click', () => {
+    if (state.captureMode) {
+      finishCapture();
+    } else {
+      startCapture();
+    }
+  });
+
+  captureDone.addEventListener('click', finishCapture);
+
+  specialKey.addEventListener('change', () => {
+    const value = specialKey.value;
+    specialKey.value = '';
+    if (!value) return;
+
+    addCaptureKey(value);
+    searchEl.focus();
+  });
+
   collapseBtn.addEventListener('click', () => setMode('collapsed', { focus: true }));
   closeBtn.addEventListener('click', () => setMode('hidden', { focus: false }));
   refreshBtn.addEventListener('click', refreshStats);
   restoreBtn.addEventListener('click', restoreStats);
 
-  listEl.addEventListener('click', () => {
+  listEl.addEventListener('click', (e) => {
+    const item = e.target.closest('.item');
+    if (item) {
+      const previousId = state.selectedId;
+      state.selectedId = item.dataset.id;
+      paintSelection(previousId);
+    }
     searchEl.focus();
   });
+
+  document.addEventListener('focusin', handlePageFocus, true);
 
   pill.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -1205,6 +1918,12 @@
         updateBadges();
       }
     }
+
+    if (changes[RECENT_KEY]) {
+      recentVersion += 1;
+      state.recent = normalizeRecent(changes[RECENT_KEY].newValue);
+      renderRecent();
+    }
   });
 
   // ============ 初始化 ============
@@ -1212,9 +1931,10 @@
     const startModeVersion = modeVersion;
     const startSortVersion = sortVersion;
     const startGeometryVersion = geometryVersion;
+    const startRecentVersion = recentVersion;
     let stored = {};
     try {
-      stored = await chrome.storage.local.get([MODE_KEY, GEOMETRY_KEY, SORT_KEY]);
+      stored = await chrome.storage.local.get([MODE_KEY, GEOMETRY_KEY, SORT_KEY, RECENT_KEY]);
     } catch (e) {
       // 忽略
     }
@@ -1225,7 +1945,15 @@
     if (geometryVersion === startGeometryVersion) {
       state.geometry = normalizeGeometry(stored[GEOMETRY_KEY]);
     }
+    if (recentVersion === startRecentVersion) {
+      state.recent = normalizeRecent(stored[RECENT_KEY]);
+    }
+    if (isEditableElement(document.activeElement)) {
+      state.lastEditable = document.activeElement;
+    }
     updateSortLabel();
+    renderRecent();
+    updateContextBar();
 
     const epoch = dataEpoch;
     try {
