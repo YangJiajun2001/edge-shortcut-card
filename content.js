@@ -1,97 +1,497 @@
 (() => {
-  'use strict';
+  if (window.__ESC_CARD_OVERLAY__) return;
+  window.__ESC_CARD_OVERLAY__ = true;
 
-  // 独立卡片窗口（card.html）的界面逻辑。
-  // 早期版本是注入网页的 content script；现在不再注入任何网页。
+  const STATS_KEY = 'edgeShortcutSearchStats';
+  const MODE_KEY = 'edgeShortcutCardMode';
+  const GEOMETRY_KEY = 'edgeShortcutCardGeometry';
+  const SORT_KEY = 'edgeShortcutCardSort';
 
-  const SEARCH_STATS_KEY = 'edgeShortcutSearchStats';
+  const MODES = ['expanded', 'collapsed', 'hidden'];
+  const SORT_ORDER = ['frequency', 'default', 'category'];
 
-  // ============ 快捷键数据（可自行增删） ============
+  // ============ 快捷键数据 ============
+  // 以 Microsoft Edge 官方快捷键页为准；同一动作的多个按键合并为一个条目。
+  // 官方页未列但保留的 Edge 特色项会在 README 中标注来源。
   const SHORTCUTS = [
     // 标签页
-    { id: 'tab-new',        keys: ['Ctrl', 'T'],           title: '新建标签页',           cat: '标签页' },
-    { id: 'tab-close',      keys: ['Ctrl', 'W'],           title: '关闭当前标签页',       cat: '标签页' },
-    { id: 'tab-reopen',     keys: ['Ctrl', 'Shift', 'T'],  title: '重新打开关闭的标签页', cat: '标签页' },
-    { id: 'tab-next',       keys: ['Ctrl', 'Tab'],         title: '下一个标签页',         cat: '标签页' },
-    { id: 'tab-prev',       keys: ['Ctrl', 'Shift', 'Tab'],title: '上一个标签页',         cat: '标签页' },
-    { id: 'tab-jump',       keys: ['Ctrl', '1~8'],         title: '跳到第 N 个标签页',    cat: '标签页' },
-    { id: 'tab-last',       keys: ['Ctrl', '9'],           title: '跳到最后一个标签页',   cat: '标签页' },
+    { id: 'tab-new',        title: '新建标签页',           cat: '标签页', keys: [['Ctrl', 'T']] },
+    { id: 'tab-close',      title: '关闭当前标签页',       cat: '标签页', keys: [['Ctrl', 'W'], ['Ctrl', 'F4']] },
+    { id: 'tab-reopen',     title: '重新打开关闭的标签页', cat: '标签页', keys: [['Ctrl', 'Shift', 'T']] },
+    { id: 'tab-next',       title: '下一个标签页',         cat: '标签页', keys: [['Ctrl', 'Tab'], ['Ctrl', 'PgDn']] },
+    { id: 'tab-prev',       title: '上一个标签页',         cat: '标签页', keys: [['Ctrl', 'Shift', 'Tab'], ['Ctrl', 'PgUp']] },
+    { id: 'tab-jump',       title: '跳到第 N 个标签页',    cat: '标签页', keys: [['Ctrl', '1~8']] },
+    { id: 'tab-last',       title: '跳到最后一个标签页',   cat: '标签页', keys: [['Ctrl', '9']] },
+    { id: 'tab-duplicate',  title: '复制当前标签页',       cat: '标签页', keys: [['Ctrl', 'Shift', 'K']] },
+    { id: 'tab-mute',       title: '静音 / 取消静音标签页', cat: '标签页', keys: [['Ctrl', 'M']] },
 
-    // 窗口
-    { id: 'win-new',        keys: ['Ctrl', 'N'],           title: '新建窗口',             cat: '窗口' },
-    { id: 'win-private',    keys: ['Ctrl', 'Shift', 'N'],  title: '新建 InPrivate 窗口',  cat: '窗口' },
-    { id: 'win-close',      keys: ['Ctrl', 'Shift', 'W'],  title: '关闭当前窗口',         cat: '窗口' },
-    { id: 'win-fullscreen', keys: ['F11'],                 title: '切换全屏',             cat: '窗口' },
+    // 窗口与菜单
+    { id: 'win-new',        title: '新建窗口',             cat: '窗口与菜单', keys: [['Ctrl', 'N']] },
+    { id: 'win-private',    title: '新建 InPrivate 窗口',  cat: '窗口与菜单', keys: [['Ctrl', 'Shift', 'N']] },
+    { id: 'win-close',      title: '关闭当前窗口',         cat: '窗口与菜单', keys: [['Ctrl', 'Shift', 'W'], ['Alt', 'F4']] },
+    { id: 'win-fullscreen', title: '切换全屏',             cat: '窗口与菜单', keys: [['F11']] },
+    { id: 'win-guest',      title: '其他用户登录 / 来宾浏览', cat: '窗口与菜单', keys: [['Ctrl', 'Shift', 'M']] },
+    { id: 'menu-open',      title: '打开设置及更多菜单',   cat: '窗口与菜单', keys: [['Alt', 'F'], ['Alt', 'E'], ['F10', 'Enter']] },
+    { id: 'menu-focus',     title: '聚焦设置及更多按钮',   cat: '窗口与菜单', keys: [['Alt'], ['F10']] },
+    { id: 'context-menu',   title: '打开上下文菜单',       cat: '窗口与菜单', keys: [['Shift', 'F10']] },
+    { id: 'feedback',       title: '发送反馈',             cat: '窗口与菜单', keys: [['Alt', 'Shift', 'I']] },
+    { id: 'appbar-focus',   title: '聚焦应用栏工具栏第一项', cat: '窗口与菜单', keys: [['Alt', 'Shift', 'T']] },
 
-    // 导航
-    { id: 'nav-back',       keys: ['Alt', '←'],            title: '后退',                 cat: '导航' },
-    { id: 'nav-forward',    keys: ['Alt', '→'],            title: '前进',                 cat: '导航' },
-    { id: 'nav-refresh',    keys: ['Ctrl', 'R'],           title: '刷新页面',             cat: '导航' },
-    { id: 'nav-hard',       keys: ['Ctrl', 'Shift', 'R'],  title: '强制刷新（忽略缓存）', cat: '导航' },
-    { id: 'nav-stop',       keys: ['Esc'],                 title: '停止加载',             cat: '导航' },
-    { id: 'nav-home',       keys: ['Alt', 'Home'],         title: '打开主页',             cat: '导航' },
+    // 导航与滚动
+    { id: 'nav-back',       title: '后退',                 cat: '导航与滚动', keys: [['Alt', '←']] },
+    { id: 'nav-forward',    title: '前进',                 cat: '导航与滚动', keys: [['Alt', '→']] },
+    { id: 'nav-refresh',    title: '刷新页面',             cat: '导航与滚动', keys: [['Ctrl', 'R'], ['F5']] },
+    { id: 'nav-hard',       title: '强制刷新（忽略缓存）', cat: '导航与滚动', keys: [['Ctrl', 'Shift', 'R'], ['Shift', 'F5']] },
+    { id: 'nav-stop',       title: '停止加载',             cat: '导航与滚动', keys: [['Esc']] },
+    { id: 'nav-home',       title: '打开主页',             cat: '导航与滚动', keys: [['Alt', 'Home']] },
+    { id: 'page-top',       title: '跳到页面顶部',         cat: '导航与滚动', keys: [['Home']] },
+    { id: 'page-bottom',    title: '跳到页面底部',         cat: '导航与滚动', keys: [['End']] },
+    { id: 'scroll-down',    title: '向下滚动一屏',         cat: '导航与滚动', keys: [['Space'], ['PgDn']] },
+    { id: 'scroll-up',      title: '向上滚动一屏',         cat: '导航与滚动', keys: [['Shift', 'Space'], ['PgUp']] },
 
     // 地址栏
-    { id: 'url-focus',      keys: ['Ctrl', 'L'],           title: '聚焦地址栏',           cat: '地址栏' },
-    { id: 'url-focus2',     keys: ['Alt', 'D'],            title: '聚焦地址栏',           cat: '地址栏' },
-    { id: 'url-newtab',     keys: ['Alt', 'Enter'],        title: '新标签页打开地址',     cat: '地址栏' },
-    { id: 'url-www',        keys: ['Ctrl', 'Enter'],       title: '补全 www…com 后打开',  cat: '地址栏' },
+    { id: 'url-focus',      title: '聚焦地址栏',           cat: '地址栏', keys: [['Ctrl', 'L'], ['Alt', 'D'], ['F4']] },
+    { id: 'url-search',     title: '在地址栏搜索',         cat: '地址栏', keys: [['Ctrl', 'E'], ['Ctrl', 'K']] },
+    { id: 'url-www',        title: '补全 www…com 后打开',  cat: '地址栏', keys: [['Ctrl', 'Enter']] },
+    { id: 'url-paste-search', title: '粘贴并搜索 / 访问',  cat: '地址栏', keys: [['Ctrl', 'Shift', 'L']] },
+    { id: 'sidebar-search', title: '在边栏中打开搜索',     cat: '地址栏', keys: [['Ctrl', 'Shift', 'E']] },
 
-    // 页面
-    { id: 'page-find',      keys: ['Ctrl', 'F'],           title: '页内查找',             cat: '页面' },
-    { id: 'page-find-next', keys: ['Ctrl', 'G'],           title: '查找下一个',           cat: '页面' },
-    { id: 'page-find-prev', keys: ['Ctrl', 'Shift', 'G'],  title: '查找上一个',           cat: '页面' },
-    { id: 'page-print',     keys: ['Ctrl', 'P'],           title: '打印',                 cat: '页面' },
-    { id: 'page-save',      keys: ['Ctrl', 'S'],           title: '保存页面',             cat: '页面' },
-    { id: 'page-open',      keys: ['Ctrl', 'O'],           title: '打开本地文件',         cat: '页面' },
-    { id: 'page-source',    keys: ['Ctrl', 'U'],           title: '查看网页源代码',       cat: '页面' },
+    // 页面与查找
+    { id: 'page-find',      title: '页内查找',             cat: '页面与查找', keys: [['Ctrl', 'F'], ['F3']] },
+    { id: 'page-find-next', title: '查找下一个',           cat: '页面与查找', keys: [['Ctrl', 'G']] },
+    { id: 'page-find-prev', title: '查找上一个',           cat: '页面与查找', keys: [['Ctrl', 'Shift', 'G']] },
+    { id: 'page-print',     title: '打印',                 cat: '页面与查找', keys: [['Ctrl', 'P']] },
+    { id: 'page-print-system', title: '使用系统对话框打印', cat: '页面与查找', keys: [['Ctrl', 'Shift', 'P']] },
+    { id: 'page-save',      title: '保存页面',             cat: '页面与查找', keys: [['Ctrl', 'S']] },
+    { id: 'page-open',      title: '打开本地文件',         cat: '页面与查找', keys: [['Ctrl', 'O']] },
+    { id: 'page-source',    title: '查看网页源代码',       cat: '页面与查找', keys: [['Ctrl', 'U']] },
+    { id: 'page-help',      title: '打开帮助',             cat: '页面与查找', keys: [['F1']] },
 
-    // 缩放
-    { id: 'zoom-in',        keys: ['Ctrl', '+'],           title: '放大',                 cat: '缩放' },
-    { id: 'zoom-out',       keys: ['Ctrl', '-'],           title: '缩小',                 cat: '缩放' },
-    { id: 'zoom-reset',     keys: ['Ctrl', '0'],           title: '恢复默认缩放',         cat: '缩放' },
+    // 焦点与窗格
+    { id: 'pane-next',      title: '焦点移到下一个窗格',   cat: '焦点与窗格', keys: [['F6']] },
+    { id: 'pane-prev',      title: '焦点移到上一个窗格',   cat: '焦点与窗格', keys: [['Shift', 'F6']] },
+    { id: 'pane-web',       title: '焦点移到网页内容窗格', cat: '焦点与窗格', keys: [['Ctrl', 'F6']] },
+    { id: 'tabstop-next',   title: '下一个制表位',         cat: '焦点与窗格', keys: [['Tab']] },
+    { id: 'tabstop-prev',   title: '上一个制表位',         cat: '焦点与窗格', keys: [['Shift', 'Tab']] },
+    { id: 'page-caret',     title: '插入光标浏览',         cat: '焦点与窗格', keys: [['F7']] },
+
+    // 缩放与 PDF
+    { id: 'zoom-in',        title: '放大',                 cat: '缩放与 PDF', keys: [['Ctrl', '+']] },
+    { id: 'zoom-out',       title: '缩小',                 cat: '缩放与 PDF', keys: [['Ctrl', '-']] },
+    { id: 'zoom-reset',     title: '恢复默认缩放',         cat: '缩放与 PDF', keys: [['Ctrl', '0']] },
+    { id: 'pdf-fit',        title: 'PDF 适合页面 / 适合宽度', cat: '缩放与 PDF', keys: [['Ctrl', '\\']] },
+    { id: 'pdf-rotate-left', title: 'PDF 逆时针旋转 90°',  cat: '缩放与 PDF', keys: [['Ctrl', '[']] },
+    { id: 'pdf-rotate-right', title: 'PDF 顺时针旋转 90°', cat: '缩放与 PDF', keys: [['Ctrl', ']']] },
 
     // 收藏与历史
-    { id: 'fav-add',        keys: ['Ctrl', 'D'],           title: '收藏当前页',           cat: '收藏与历史' },
-    { id: 'fav-all',        keys: ['Ctrl', 'Shift', 'D'],  title: '收藏所有标签页',       cat: '收藏与历史' },
-    { id: 'fav-manage',     keys: ['Ctrl', 'Shift', 'O'],  title: '收藏夹管理器',         cat: '收藏与历史' },
-    { id: 'hist-open',      keys: ['Ctrl', 'H'],           title: '打开历史记录',         cat: '收藏与历史' },
-    { id: 'dl-open',        keys: ['Ctrl', 'J'],           title: '打开下载内容',         cat: '收藏与历史' },
-    { id: 'clear-data',     keys: ['Ctrl', 'Shift', 'Delete'], title: '清除浏览数据',      cat: '收藏与历史' },
+    { id: 'fav-add',        title: '收藏当前页',           cat: '收藏与历史', keys: [['Ctrl', 'D']] },
+    { id: 'fav-all',        title: '收藏所有标签页',       cat: '收藏与历史', keys: [['Ctrl', 'Shift', 'D']] },
+    { id: 'fav-open',       title: '打开收藏夹',           cat: '收藏与历史', keys: [['Ctrl', 'Shift', 'O']] },
+    { id: 'fav-first',      title: '聚焦收藏夹栏第一项',   cat: '收藏与历史', keys: [['Alt', 'Shift', 'B']] },
+    { id: 'fav-bar',        title: '显示 / 隐藏收藏栏',    cat: '收藏与历史', keys: [['Ctrl', 'Shift', 'B']] },
+    { id: 'hist-open',      title: '打开历史记录',         cat: '收藏与历史', keys: [['Ctrl', 'H']] },
+    { id: 'dl-open',        title: '打开下载内容',         cat: '收藏与历史', keys: [['Ctrl', 'J']] },
+    { id: 'clear-data',     title: '清除浏览数据',         cat: '收藏与历史', keys: [['Ctrl', 'Shift', 'Delete']] },
 
-    // 开发者
-    { id: 'devtools',       keys: ['F12'],                 title: '开发者工具',           cat: '开发者' },
-    { id: 'devtools2',      keys: ['Ctrl', 'Shift', 'I'],  title: '开发者工具',           cat: '开发者' },
-    { id: 'console',        keys: ['Ctrl', 'Shift', 'J'],  title: '打开控制台',           cat: '开发者' },
-    { id: 'inspect',        keys: ['Ctrl', 'Shift', 'C'],  title: '检查元素',             cat: '开发者' },
+    // 开发者与阅读
+    { id: 'devtools',       title: '开发者工具',           cat: '开发者与阅读', keys: [['F12'], ['Ctrl', 'Shift', 'I']] },
+    { id: 'console',        title: '打开控制台',           cat: '开发者与阅读', keys: [['Ctrl', 'Shift', 'J']] },
+    { id: 'inspect',        title: '检查元素',             cat: '开发者与阅读', keys: [['Ctrl', 'Shift', 'C']] },
+    { id: 'read-aloud',     title: '开始 / 停止朗读此页',  cat: '开发者与阅读', keys: [['Ctrl', 'Shift', 'U']] },
+    { id: 'page-reader',    title: '沉浸式阅读器',         cat: '开发者与阅读', keys: [['F9']] },
 
     // Edge 特色
-    { id: 'edge-capture',   keys: ['Ctrl', 'Shift', 'S'],  title: '网页捕获',             cat: 'Edge 特色' },
-    { id: 'edge-split',     keys: ['Ctrl', 'Shift', 'E'],  title: '拆分屏幕',             cat: 'Edge 特色' },
-    { id: 'edge-collect',   keys: ['Ctrl', 'Shift', 'Y'],  title: '集锦',                 cat: 'Edge 特色' },
-    { id: 'edge-read',      keys: ['Ctrl', 'Shift', 'U'],  title: '朗读此页',             cat: 'Edge 特色' },
-    { id: 'edge-favbar',    keys: ['Ctrl', 'Shift', 'B'],  title: '显示/隐藏收藏栏',      cat: 'Edge 特色' },
-    { id: 'edge-paste',     keys: ['Ctrl', 'Shift', 'V'],  title: '粘贴为纯文本',         cat: 'Edge 特色' },
-    { id: 'edge-menu',      keys: ['Alt', 'F'],            title: '打开设置菜单',         cat: 'Edge 特色' },
+    { id: 'collections',    title: '打开集锦',             cat: 'Edge 特色', keys: [['Ctrl', 'Shift', 'Y']] },
+    { id: 'paste-plain',    title: '粘贴为纯文本',         cat: 'Edge 特色', keys: [['Ctrl', 'Shift', 'V']] },
+    { id: 'web-capture',    title: '网页捕获',             cat: 'Edge 特色', keys: [['Ctrl', 'Shift', 'S']] },
   ];
-
-  const SORT_ORDER = ['frequency', 'default', 'category'];
 
   // ============ 状态 ============
   const state = {
+    mode: 'hidden',
     query: '',
     sortBy: 'frequency',
     stats: {},
+    geometry: { expanded: null, collapsed: null },
   };
 
-  // ============ DOM ============
-  const listEl = document.querySelector('.list');
-  const searchEl = document.querySelector('.search');
-  const sortBtn = document.querySelector('.sort');
-  const closeBtn = document.querySelector('.close');
-  const refreshBtn = document.querySelector('.refresh');
-  const restoreBtn = document.querySelector('.restore');
-  const toastEl = document.querySelector('.toast');
+  // 清掉旧版本可能残留的网页卡片
+  document.querySelectorAll('[data-edge-shortcut-card]').forEach((el) => el.remove());
+
+  // ============ 宿主 + Shadow DOM ============
+  const host = document.createElement('div');
+  host.setAttribute('data-edge-shortcut-overlay', '');
+  host.style.cssText = 'all:initial;position:fixed;inset:0;z-index:2147483647;pointer-events:none;';
+  (document.documentElement || document.body).appendChild(host);
+
+  const root = host.attachShadow({ mode: 'open' });
+  root.innerHTML = `
+    <style>
+      :host {
+        --bg: #ffffff;
+        --bg-soft: #f7f8fa;
+        --fg: #1f2328;
+        --fg-muted: #6b7280;
+        --border: #e6e8eb;
+        --hover: #f1f3f5;
+        --accent: #0b7dda;
+        --accent-soft: #e8f2fd;
+        --shadow: 0 12px 32px rgba(0,0,0,.16), 0 2px 8px rgba(0,0,0,.08);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :host {
+          --bg: #1f2023;
+          --bg-soft: #26282c;
+          --fg: #e6e7e9;
+          --fg-muted: #9aa0a6;
+          --border: #35373c;
+          --hover: #2c2e33;
+          --accent: #4da3ff;
+          --accent-soft: #1e344d;
+          --shadow: 0 12px 32px rgba(0,0,0,.5);
+        }
+      }
+
+      *, *::before, *::after { box-sizing: border-box; }
+
+      .card[hidden], .pill[hidden] { display: none !important; }
+
+      .card {
+        position: fixed;
+        right: 24px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 360px;
+        max-width: calc(100vw - 16px);
+        max-height: 70vh;
+        display: flex;
+        flex-direction: column;
+        background: var(--bg);
+        color: var(--fg);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        box-shadow: var(--shadow);
+        font-family: system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+        font-size: 13px;
+        line-height: 1.45;
+        overflow: hidden;
+        pointer-events: auto;
+        user-select: none;
+      }
+
+      .header {
+        display: flex;
+        flex: 0 0 auto;
+        align-items: center;
+        gap: 6px;
+        padding: 10px 10px 8px;
+        border-bottom: 1px solid var(--border);
+        cursor: move;
+      }
+
+      .brand {
+        display: flex;
+        flex: 1 1 auto;
+        min-width: 0;
+        align-items: center;
+        gap: 7px;
+      }
+
+      .logo {
+        display: grid;
+        flex: 0 0 auto;
+        width: 28px;
+        height: 22px;
+        place-items: center;
+        border-radius: 6px;
+        background: var(--accent);
+        color: #fff;
+        font-size: 13px;
+        line-height: 1;
+      }
+
+      .brand-title {
+        overflow: hidden;
+        color: var(--fg);
+        font-size: 13px;
+        font-weight: 700;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .btn {
+        flex: 0 0 auto;
+        height: 30px;
+        padding: 0 9px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--bg-soft);
+        color: var(--fg);
+        font: inherit;
+        font-size: 12px;
+        cursor: pointer;
+      }
+
+      .btn:hover { background: var(--hover); }
+      .btn:active { transform: translateY(1px); }
+      .btn:disabled { opacity: .55; cursor: default; }
+      .btn.icon { width: 28px; height: 28px; padding: 0; font-size: 16px; line-height: 1; }
+      .btn.small { height: 25px; padding: 0 8px; border-radius: 7px; font-size: 10.5px; }
+
+      .search-row {
+        display: flex;
+        flex: 0 0 auto;
+        gap: 6px;
+        padding: 0 10px 8px;
+      }
+
+      .search {
+        flex: 1 1 auto;
+        min-width: 0;
+        height: 30px;
+        padding: 0 9px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--bg-soft);
+        color: var(--fg);
+        font: inherit;
+        outline: none;
+        user-select: text;
+        cursor: text;
+      }
+
+      .search:focus { border-color: var(--accent); }
+      .search::placeholder { color: var(--fg-muted); }
+
+      .sort { height: 30px; font-size: 11px; }
+
+      .list {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-x: hidden;
+        overflow-y: auto;
+        padding: 4px 6px 6px;
+        overscroll-behavior: contain;
+        scrollbar-width: thin;
+        scrollbar-color: var(--border) transparent;
+      }
+
+      .list::-webkit-scrollbar { width: 8px; }
+      .list::-webkit-scrollbar-thumb { border-radius: 4px; background: var(--border); }
+      .list::-webkit-scrollbar-track { background: transparent; }
+
+      .group {
+        padding: 9px 8px 3px;
+        color: var(--fg-muted);
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: .04em;
+      }
+
+      .item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 8px;
+        border-radius: 8px;
+      }
+
+      .item:hover { background: var(--hover); }
+      .item.flash { animation: escFlash .55s ease-out; }
+
+      @keyframes escFlash {
+        0% { background: var(--accent-soft); }
+        100% { background: transparent; }
+      }
+
+      .keys {
+        display: flex;
+        flex: 0 0 auto;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 3px;
+        min-width: 96px;
+      }
+
+      kbd {
+        display: inline-block;
+        padding: 2px 6px;
+        border: 1px solid var(--border);
+        border-bottom-width: 2px;
+        border-radius: 5px;
+        background: var(--bg-soft);
+        color: var(--fg);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 11px;
+        line-height: 1.3;
+        white-space: nowrap;
+      }
+
+      .plus { color: var(--fg-muted); font-size: 10px; }
+
+      .text { flex: 1 1 auto; min-width: 0; }
+
+      .title {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .cat {
+        overflow: hidden;
+        color: var(--fg-muted);
+        font-size: 10.5px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .count {
+        flex: 0 0 auto;
+        min-width: 22px;
+        padding: 1px 6px;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-size: 10.5px;
+        font-variant-numeric: tabular-nums;
+        text-align: center;
+      }
+
+      .empty {
+        padding: 34px 12px;
+        color: var(--fg-muted);
+        text-align: center;
+      }
+
+      .footer {
+        display: flex;
+        flex: 0 0 auto;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+        padding: 6px 10px 8px;
+        border-top: 1px solid var(--border);
+      }
+
+      .hints {
+        display: flex;
+        flex: 1 1 150px;
+        flex-direction: column;
+        min-width: 0;
+        color: var(--fg-muted);
+        font-size: 10px;
+        line-height: 1.35;
+      }
+
+      .hint-sub { font-size: 9.5px; color: var(--fg-muted); opacity: .85; }
+
+      .actions { display: flex; flex: 0 0 auto; gap: 5px; }
+
+      .pill {
+        position: fixed;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        height: 40px;
+        padding: 0 14px;
+        border: 0;
+        border-radius: 20px;
+        background: var(--accent);
+        box-shadow: var(--shadow);
+        color: #fff;
+        font-family: system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1;
+        cursor: pointer;
+        pointer-events: auto;
+        user-select: none;
+      }
+
+      .pill:hover { filter: brightness(1.08); }
+      .pill:active { transform: translateY(-50%) scale(.98); }
+      .pill-icon { font-size: 14px; }
+
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: 24px;
+        max-width: calc(100vw - 32px);
+        padding: 7px 12px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: var(--accent);
+        box-shadow: var(--shadow);
+        color: #fff;
+        font-family: system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+        font-size: 12px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transform: translate(-50%, 4px);
+        transition: opacity .16s ease, transform .16s ease;
+      }
+
+      .toast.show {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+    </style>
+
+    <div class="card" hidden>
+      <div class="header">
+        <div class="brand">
+          <span class="logo">⌨</span>
+          <span class="brand-title">快捷键</span>
+        </div>
+        <button class="btn icon collapse" type="button" title="收起">−</button>
+        <button class="btn icon close" type="button" title="隐藏">×</button>
+      </div>
+
+      <div class="search-row">
+        <input class="search" type="text" placeholder="搜索快捷键 / 功能…" spellcheck="false" autocomplete="off" />
+        <button class="btn sort" type="button" title="切换排序方式">频率</button>
+      </div>
+
+      <div class="list"></div>
+
+      <div class="footer">
+        <div class="hints">
+          <span>Enter 记录首条结果搜索次数</span>
+          <span class="hint-sub">点击条目不计数</span>
+        </div>
+        <div class="actions">
+          <button class="btn small refresh" type="button" title="重新读取搜索次数">刷新</button>
+          <button class="btn small restore" type="button" title="清空搜索次数并恢复默认">恢复</button>
+        </div>
+      </div>
+    </div>
+
+    <button class="pill" type="button" hidden title="展开快捷键卡片">
+      <span class="pill-icon">⌨</span>
+      <span>快捷键</span>
+    </button>
+
+    <div class="toast" role="status" aria-live="polite"></div>
+  `;
+
+  const card = root.querySelector('.card');
+  const header = root.querySelector('.header');
+  const listEl = root.querySelector('.list');
+  const searchEl = root.querySelector('.search');
+  const sortBtn = root.querySelector('.sort');
+  const collapseBtn = root.querySelector('.collapse');
+  const closeBtn = root.querySelector('.close');
+  const refreshBtn = root.querySelector('.refresh');
+  const restoreBtn = root.querySelector('.restore');
+  const pill = root.querySelector('.pill');
+  const toastEl = root.querySelector('.toast');
 
   // ============ 工具 ============
   const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({
@@ -123,11 +523,35 @@
       }
       throw new Error(res?.error || '读取失败');
     } catch (e) {
-      // background 不可用时退回直接读 storage
-      const data = await chrome.storage.local.get(SEARCH_STATS_KEY);
-      const stats = data[SEARCH_STATS_KEY];
+      const data = await chrome.storage.local.get(STATS_KEY);
+      const stats = data[STATS_KEY];
       return (stats && typeof stats === 'object') ? stats : {};
     }
+  }
+
+  function validMode(value) {
+    return MODES.includes(value) ? value : 'hidden';
+  }
+
+  function validSort(value) {
+    return SORT_ORDER.includes(value) ? value : 'frequency';
+  }
+
+  function normalizeGeometry(value) {
+    const result = { expanded: null, collapsed: null };
+    if (!value || typeof value !== 'object') return result;
+
+    const expanded = value.expanded;
+    if (expanded && Number.isFinite(expanded.left) && Number.isFinite(expanded.top)) {
+      result.expanded = { left: expanded.left, top: expanded.top };
+    }
+
+    const collapsed = value.collapsed;
+    if (collapsed && Number.isFinite(collapsed.top)) {
+      result.collapsed = { top: collapsed.top };
+    }
+
+    return result;
   }
 
   // ============ 排序 / 过滤 ============
@@ -137,7 +561,8 @@
 
     if (q) {
       arr = arr.filter((s) => {
-        const hay = `${s.title} ${s.cat} ${s.keys.join(' ')}`.toLowerCase();
+        const keyText = s.keys.map((combo) => combo.join(' ')).join(' ');
+        const hay = `${s.title} ${s.cat} ${keyText}`.toLowerCase();
         return hay.includes(q);
       });
     }
@@ -174,16 +599,19 @@
       }
 
       const count = state.stats[s.id] || 0;
-      const keyHtml = s.keys
+      const primary = s.keys[0];
+      const keyHtml = primary
         .map((k) => `<kbd>${escapeHtml(k)}</kbd>`)
         .join('<span class="plus">+</span>');
+      const altText = s.keys.slice(1).map((combo) => combo.join(' ')).join(' / ');
+      const catText = altText ? `${s.cat} · 备选 ${altText}` : s.cat;
 
       html += `
-        <div class="item" data-id="${s.id}">
+        <div class="item" data-id="${s.id}" title="${escapeHtml(s.title)} · ${escapeHtml(catText)}">
           <div class="keys">${keyHtml}</div>
           <div class="text">
             <div class="title">${escapeHtml(s.title)}</div>
-            ${state.sortBy === 'category' ? '' : `<div class="cat">${escapeHtml(s.cat)}</div>`}
+            <div class="cat">${escapeHtml(catText)}</div>
           </div>
           ${count > 0 ? `<div class="count" title="搜索次数">${count}</div>` : ''}
         </div>`;
@@ -195,16 +623,6 @@
 
   function updateSortLabel() {
     sortBtn.textContent = { frequency: '频率', default: '默认', category: '分类' }[state.sortBy];
-  }
-
-  function mergeStats(incoming) {
-    if (!incoming || typeof incoming !== 'object') return;
-    for (const [id, raw] of Object.entries(incoming)) {
-      const count = Number(raw);
-      if (Number.isFinite(count) && count > (state.stats[id] || 0)) {
-        state.stats[id] = count;
-      }
-    }
   }
 
   function findItem(id) {
@@ -231,6 +649,36 @@
     }
   }
 
+  function updateBadges() {
+    listEl.querySelectorAll('.item').forEach((item) => {
+      const id = item.dataset.id;
+      const count = state.stats[id] || 0;
+      let badge = item.querySelector('.count');
+
+      if (count > 0) {
+        if (!badge) {
+          badge = document.createElement('div');
+          badge.className = 'count';
+          badge.title = '搜索次数';
+          item.appendChild(badge);
+        }
+        badge.textContent = count;
+      } else if (badge) {
+        badge.remove();
+      }
+    });
+  }
+
+  function mergeStats(incoming) {
+    if (!incoming || typeof incoming !== 'object') return;
+    for (const [id, raw] of Object.entries(incoming)) {
+      const count = Number(raw);
+      if (Number.isFinite(count) && count > (state.stats[id] || 0)) {
+        state.stats[id] = count;
+      }
+    }
+  }
+
   function flashItem(id) {
     const item = findItem(id);
     if (!item) return;
@@ -244,16 +692,146 @@
   let toastTimer = null;
 
   function showToast(message) {
+    if (state.mode !== 'expanded') return;
     toastEl.textContent = message;
     toastEl.classList.add('show');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => toastEl.classList.remove('show'), 1800);
   }
 
-  // ============ 搜索计数 ============
-  // 规则：搜索框有内容时按回车，给当前可见结果的第一条 +1。
-  let lastRecordAt = 0;
+  function hideToast() {
+    clearTimeout(toastTimer);
+    toastEl.classList.remove('show');
+  }
+
+  // ============ 形态 / 位置 ============
   let dataEpoch = 0;
+  let modeVersion = 0;
+  let sortVersion = 0;
+  let geometryVersion = 0;
+
+  function ensureMounted() {
+    if (!host.isConnected) {
+      (document.documentElement || document.body).appendChild(host);
+    }
+  }
+
+  function clampPosition(left, top, width, height) {
+    const maxLeft = Math.max(8, window.innerWidth - width - 8);
+    const maxTop = Math.max(8, window.innerHeight - height - 8);
+    return {
+      left: Math.min(Math.max(8, left), maxLeft),
+      top: Math.min(Math.max(8, top), maxTop),
+    };
+  }
+
+  function applyExpandedGeometry() {
+    if (card.hidden) return;
+
+    const geo = state.geometry.expanded;
+    if (!geo) {
+      const rect = card.getBoundingClientRect();
+      const width = rect.width || 360;
+      const height = rect.height || 0;
+      const left = Math.max(8, window.innerWidth - width - 24);
+      const top = Math.max(8, (window.innerHeight - height) / 2);
+      card.style.transform = 'none';
+      card.style.right = 'auto';
+      card.style.left = left + 'px';
+      card.style.top = top + 'px';
+      return;
+    }
+
+    card.style.transform = 'none';
+    card.style.right = 'auto';
+
+    const rect = card.getBoundingClientRect();
+    const width = rect.width || 360;
+    const height = rect.height || 0;
+    const next = clampPosition(geo.left, geo.top, width, height);
+    card.style.left = next.left + 'px';
+    card.style.top = next.top + 'px';
+  }
+
+  function applyCollapsedGeometry() {
+    if (pill.hidden) return;
+
+    const geo = state.geometry.collapsed;
+    if (!geo) {
+      pill.style.top = '';
+      pill.style.transform = '';
+      return;
+    }
+
+    pill.style.transform = 'none';
+    const height = pill.offsetHeight || 40;
+    const next = clampPosition(0, geo.top, 0, height);
+    pill.style.top = next.top + 'px';
+  }
+
+  function applyGeometryForMode() {
+    if (state.mode === 'expanded') applyExpandedGeometry();
+    else if (state.mode === 'collapsed') applyCollapsedGeometry();
+  }
+
+  function saveGeometry() {
+    chrome.storage.local.set({ [GEOMETRY_KEY]: state.geometry }).catch(() => {});
+  }
+
+  function applyMode(mode, opts = {}) {
+    const next = validMode(mode);
+    const focus = opts.focus === true;
+    modeVersion += 1;
+    state.mode = next;
+
+    ensureMounted();
+    card.hidden = next !== 'expanded';
+    pill.hidden = next !== 'collapsed';
+
+    if (next === 'expanded') {
+      render(false);
+      applyExpandedGeometry();
+      if (focus) {
+        requestAnimationFrame(() => {
+          if (state.mode === 'expanded') searchEl.focus();
+        });
+      }
+      return;
+    }
+
+    searchEl.blur();
+
+    if (next === 'collapsed') {
+      hideToast();
+      applyCollapsedGeometry();
+      if (focus) {
+        requestAnimationFrame(() => {
+          if (state.mode === 'collapsed') pill.focus();
+        });
+      }
+      return;
+    }
+
+    pill.blur();
+    hideToast();
+  }
+
+  function setMode(mode, opts = {}) {
+    applyMode(mode, opts);
+    chrome.storage.local.set({ [MODE_KEY]: validMode(mode) }).catch(() => {});
+  }
+
+  function cycleMode(opts = {}) {
+    let next;
+    if (state.mode === 'hidden') next = 'expanded';
+    else if (state.mode === 'expanded') next = 'collapsed';
+    else next = 'expanded';
+
+    setMode(next, { focus: opts.focus !== false });
+  }
+
+  // ============ 搜索计数 ============
+  let lastRecordAt = 0;
 
   async function recordSearch(target) {
     const now = Date.now();
@@ -265,8 +843,6 @@
     try {
       const res = await sendMessage({ type: 'ESC_RECORD_SEARCH', id: target.id });
       if (!res || !res.ok) throw new Error(res?.error || '记录失败');
-
-      // 期间如果点了刷新/恢复，旧请求的结果不要覆盖新状态
       if (epoch !== dataEpoch) return;
 
       const count = Number(res.count);
@@ -275,9 +851,11 @@
         : (state.stats[target.id] || 0) + 1;
       state.stats[target.id] = Math.max(state.stats[target.id] || 0, next);
 
-      paintCount(target.id);
-      flashItem(target.id);
-      showToast(`已记录搜索：${target.title}`);
+      if (state.mode === 'expanded') {
+        paintCount(target.id);
+        flashItem(target.id);
+        showToast(`已记录搜索：${target.title}`);
+      }
     } catch (e) {
       console.warn('[快捷键卡片] 记录搜索次数失败：', e?.message || e);
       showToast('记录失败，请重试');
@@ -295,10 +873,13 @@
       const stats = await loadStats();
       if (epoch !== dataEpoch) return;
 
-      mergeStats(stats);
-      render(true);
-      searchEl.focus();
-      showToast('已刷新');
+      mergeStats(stats || {});
+
+      if (state.mode === 'expanded') {
+        render(true);
+        searchEl.focus();
+        showToast('已刷新');
+      }
     } catch (e) {
       console.warn('[快捷键卡片] 刷新搜索次数失败：', e?.message || e);
       showToast('刷新失败，请重试');
@@ -312,23 +893,27 @@
     if (restoreBtn.disabled) return;
     if (!window.confirm('确定清空所有搜索次数，恢复默认数据？')) return;
 
-    const epoch = ++dataEpoch;
+    dataEpoch += 1;
     restoreBtn.disabled = true;
     refreshBtn.disabled = true;
     try {
       const res = await sendMessage({ type: 'ESC_RESET_STATS' });
       if (!res || !res.ok) throw new Error(res?.error || '恢复失败');
-      if (epoch !== dataEpoch) return;
 
       state.stats = {};
       state.query = '';
-      searchEl.value = '';
       state.sortBy = 'frequency';
+      sortVersion += 1;
       lastRecordAt = 0;
+      searchEl.value = '';
       updateSortLabel();
-      render(true);
-      searchEl.focus();
-      showToast('已恢复默认');
+      chrome.storage.local.set({ [SORT_KEY]: state.sortBy }).catch(() => {});
+
+      if (state.mode === 'expanded') {
+        render(true);
+        searchEl.focus();
+        showToast('已恢复默认');
+      }
     } catch (e) {
       console.warn('[快捷键卡片] 恢复默认数据失败：', e?.message || e);
       showToast('恢复失败，请重试');
@@ -338,28 +923,107 @@
     }
   }
 
-  function closeCard() {
-    try {
-      chrome.windows.getCurrent((win) => {
-        if (chrome.runtime.lastError || !win || win.id === undefined) {
-          window.close();
-          return;
-        }
-        // 只在真正的 popup 窗口里移除窗口；手工在普通标签页打开时不要关掉整个浏览器窗口
-        if (win.type !== 'popup') {
-          window.close();
-          return;
-        }
-        chrome.windows.remove(win.id, () => {
-          if (chrome.runtime.lastError) window.close();
-        });
-      });
-    } catch (e) {
-      window.close();
+  // ============ 拖动 ============
+  let draggingCard = false;
+  let cardStartX = 0;
+  let cardStartY = 0;
+  let cardOriginLeft = 0;
+  let cardOriginTop = 0;
+
+  header.addEventListener('mousedown', (e) => {
+    if (e.button !== 0 || e.target.closest('button, input')) return;
+
+    const rect = card.getBoundingClientRect();
+    draggingCard = true;
+    cardStartX = e.clientX;
+    cardStartY = e.clientY;
+    cardOriginLeft = rect.left;
+    cardOriginTop = rect.top;
+
+    card.style.transform = 'none';
+    card.style.right = 'auto';
+    card.style.left = rect.left + 'px';
+    card.style.top = rect.top + 'px';
+    e.preventDefault();
+  });
+
+  let draggingPill = false;
+  let pillStartY = 0;
+  let pillOriginTop = 0;
+  let pillMoved = false;
+  let suppressPillClick = false;
+
+  pill.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
+
+    const rect = pill.getBoundingClientRect();
+    draggingPill = true;
+    pillMoved = false;
+    pillStartY = e.clientY;
+    pillOriginTop = rect.top;
+
+    pill.style.transform = 'none';
+    pill.style.top = rect.top + 'px';
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (draggingCard && !card.hidden) {
+      const rect = card.getBoundingClientRect();
+      const width = rect.width || 360;
+      const height = rect.height || 0;
+      const next = clampPosition(
+        cardOriginLeft + e.clientX - cardStartX,
+        cardOriginTop + e.clientY - cardStartY,
+        width,
+        height
+      );
+      card.style.left = next.left + 'px';
+      card.style.top = next.top + 'px';
+      return;
     }
-  }
+
+    if (draggingPill && !pill.hidden) {
+      const height = pill.offsetHeight || 40;
+      if (Math.abs(e.clientY - pillStartY) > 3) pillMoved = true;
+      const next = clampPosition(0, pillOriginTop + e.clientY - pillStartY, 0, height);
+      pill.style.top = next.top + 'px';
+    }
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (draggingCard) {
+      draggingCard = false;
+      if (card.hidden) return;
+
+      const rect = card.getBoundingClientRect();
+      state.geometry.expanded = { left: rect.left, top: rect.top };
+      saveGeometry();
+      return;
+    }
+
+    if (draggingPill) {
+      draggingPill = false;
+      if (pill.hidden) return;
+      if (pillMoved) {
+        const rect = pill.getBoundingClientRect();
+        state.geometry.collapsed = { top: rect.top };
+        saveGeometry();
+        suppressPillClick = true;
+        setTimeout(() => { suppressPillClick = false; }, 300);
+      }
+    }
+  });
+
+  window.addEventListener('resize', () => {
+    if (state.mode === 'expanded') applyExpandedGeometry();
+    else if (state.mode === 'collapsed') applyCollapsedGeometry();
+  });
 
   // ============ 事件 ============
+  card.addEventListener('click', (e) => e.stopPropagation());
+  card.addEventListener('mousedown', (e) => e.stopPropagation());
+  card.addEventListener('wheel', (e) => e.stopPropagation(), { passive: true });
+
   searchEl.addEventListener('input', () => {
     state.query = searchEl.value;
     render(true);
@@ -394,47 +1058,139 @@
         state.query = '';
         render(true);
       } else {
-        closeCard();
+        setMode('collapsed', { focus: true });
       }
     }
   });
 
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && e.target !== searchEl) closeCard();
+  card.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && e.target !== searchEl) {
+      e.preventDefault();
+      e.stopPropagation();
+      setMode('collapsed', { focus: true });
+    }
   });
+
+  pill.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      setMode('hidden', { focus: false });
+    }
+  });
+
+  host.addEventListener('keydown', (e) => e.stopPropagation());
+  host.addEventListener('keyup', (e) => e.stopPropagation());
+  host.addEventListener('keypress', (e) => e.stopPropagation());
 
   sortBtn.addEventListener('click', () => {
     const index = SORT_ORDER.indexOf(state.sortBy);
     state.sortBy = SORT_ORDER[(index + 1) % SORT_ORDER.length];
+    sortVersion += 1;
     updateSortLabel();
+    chrome.storage.local.set({ [SORT_KEY]: state.sortBy }).catch(() => {});
     render(true);
     searchEl.focus();
   });
 
-  closeBtn.addEventListener('click', closeCard);
+  collapseBtn.addEventListener('click', () => setMode('collapsed', { focus: true }));
+  closeBtn.addEventListener('click', () => setMode('hidden', { focus: false }));
   refreshBtn.addEventListener('click', refreshStats);
   restoreBtn.addEventListener('click', restoreStats);
 
-  // 条目本身没有点击动作；点击列表后把焦点还给搜索框，方便继续输入/回车
-  listEl.addEventListener('click', () => searchEl.focus());
+  listEl.addEventListener('click', () => {
+    searchEl.focus();
+  });
 
-  window.addEventListener('focus', () => searchEl.focus());
+  pill.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (suppressPillClick) {
+      suppressPillClick = false;
+      return;
+    }
+    setMode('expanded', { focus: true });
+  });
+
+  pill.addEventListener('mouseup', (e) => e.stopPropagation());
+  pill.addEventListener('mousedown', (e) => e.stopPropagation());
+
+  // ============ 消息 ============
+  chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+    if (!msg || msg.type !== 'ESC_TOGGLE_CARD') return;
+
+    ensureMounted();
+    cycleMode({ focus: true });
+    sendResponse({ ok: true });
+  });
+
+  // ============ 存储同步 ============
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== 'local') return;
+
+    if (changes[MODE_KEY]) {
+      applyMode(changes[MODE_KEY].newValue, { focus: false });
+    }
+
+    if (changes[GEOMETRY_KEY]) {
+      geometryVersion += 1;
+      state.geometry = normalizeGeometry(changes[GEOMETRY_KEY].newValue);
+      applyGeometryForMode();
+    }
+
+    if (changes[SORT_KEY]) {
+      sortVersion += 1;
+      state.sortBy = validSort(changes[SORT_KEY].newValue);
+      updateSortLabel();
+      if (state.mode === 'expanded') render(false);
+    }
+
+    if (changes[STATS_KEY]) {
+      const next = changes[STATS_KEY].newValue;
+      state.stats = (next && typeof next === 'object') ? next : {};
+
+      if (!next || Object.keys(next).length === 0) {
+        dataEpoch += 1;
+        if (state.mode === 'expanded') render(false);
+      } else if (state.mode === 'expanded') {
+        updateBadges();
+      }
+    }
+  });
 
   // ============ 初始化 ============
   (async () => {
-    updateSortLabel();
-    const epoch = dataEpoch;
+    const startModeVersion = modeVersion;
+    const startSortVersion = sortVersion;
+    const startGeometryVersion = geometryVersion;
+    let stored = {};
+    try {
+      stored = await chrome.storage.local.get([MODE_KEY, GEOMETRY_KEY, SORT_KEY]);
+    } catch (e) {
+      // 忽略
+    }
 
+    if (sortVersion === startSortVersion) {
+      state.sortBy = validSort(stored[SORT_KEY]);
+    }
+    if (geometryVersion === startGeometryVersion) {
+      state.geometry = normalizeGeometry(stored[GEOMETRY_KEY]);
+    }
+    updateSortLabel();
+
+    const epoch = dataEpoch;
     try {
       const stats = await loadStats();
       if (epoch === dataEpoch) mergeStats(stats);
     } catch (e) {
       console.warn('[快捷键卡片] 读取搜索次数失败：', e?.message || e);
-      if (epoch === dataEpoch) showToast('读取搜索次数失败');
     }
 
-    // 如果加载期间已经点了刷新/恢复，不要用旧结果覆盖新状态；列表仍然先画出来
+    // 加载期间如果用户已经按过快捷键或别的标签页改了形态，以最新状态为准
+    if (modeVersion === startModeVersion) {
+      state.mode = validMode(stored[MODE_KEY]);
+    }
+
     render();
-    searchEl.focus();
+    applyMode(state.mode, { focus: false });
   })();
 })();

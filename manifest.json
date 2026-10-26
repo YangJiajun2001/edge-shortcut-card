@@ -1,14 +1,22 @@
 {
   "manifest_version": 3,
   "name": "Edge 快捷键卡片",
-  "version": "1.1.0",
-  "description": "独立小窗口中的 Edge 快捷键卡片：搜索、回车记录搜索次数、按频率排序。",
+  "version": "1.2.0",
+  "description": "页面内可收起/展开的 Edge 快捷键卡片：搜索、回车记录搜索次数、按频率排序。",
   "permissions": ["storage"],
   "background": {
     "service_worker": "background.js"
   },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
   "action": {
-    "default_title": "打开快捷键卡片 (Alt+Shift+K)"
+    "default_title": "展开/收起快捷键卡片 (Alt+Shift+K)"
   },
   "commands": {
     "_execute_action": {

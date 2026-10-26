@@ -1,5 +1,7 @@
 # Edge 快捷键卡片 · 设计讨论 v1
 
+> 状态：方案 A（页面内悬浮卡片）已确认，已在 `v1.2.0` 实现。本文保留设计讨论记录；实现后的结构以 [README](../README.md) 为准。
+
 ## 0. 这轮先不改前端
 
 按第 5 条要求，本文只做方案、设计图和讨论，不改 `manifest.json` / `background.js` / `content.js` / `card.html` / `card.css`。确认后再动代码。
