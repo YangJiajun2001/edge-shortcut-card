@@ -1,0 +1,287 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1680" height="1050" viewBox="0 0 1680 1050">
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#0f172a" flood-opacity="0.15"/>
+    </filter>
+    <style>
+      text { font-family: "Microsoft YaHei", "Segoe UI", system-ui, sans-serif; }
+      .title { font-size: 28px; font-weight: 700; fill: #111827; }
+      .subtitle { font-size: 14px; fill: #64748b; }
+      .panel-title { font-size: 17px; font-weight: 700; fill: #0f172a; }
+      .panel-sub { font-size: 10.5px; fill: #64748b; }
+      .card-title { font-size: 12.5px; font-weight: 700; fill: #0f172a; }
+      .search { font-size: 10px; fill: #94a3b8; }
+      .btn { font-size: 9px; font-weight: 600; fill: #475569; }
+      .kbd { font-size: 8.5px; font-weight: 600; fill: #334155; }
+      .item { font-size: 10.5px; font-weight: 600; fill: #1e293b; }
+      .item-small { font-size: 8.5px; fill: #94a3b8; }
+      .count { font-size: 9px; font-weight: 700; fill: #0b7dda; }
+      .hint { font-size: 8.5px; fill: #64748b; }
+      .tiny { font-size: 7.5px; fill: #94a3b8; }
+      .anno { font-size: 10.5px; fill: #475569; }
+      .anno-blue { font-size: 10.5px; fill: #0b7dda; }
+      .bottom { font-size: 12px; fill: #e2e8f0; }
+    </style>
+  </defs>
+
+  <rect width="1680" height="1050" fill="#eef2f7"/>
+
+  <text x="40" y="54" class="title">Edge 快捷键卡片 · 设计草案 v2</text>
+  <text x="40" y="82" class="subtitle">轻量查找与学习 · 最近 3 条 · 输入框上下文 · 逐键录入 · 键盘选择 · 模糊匹配</text>
+
+  <!-- ==================== 1. 默认展开 ==================== -->
+  <rect x="30" y="112" width="520" height="858" rx="20" fill="#ffffff" stroke="#dbe3ee"/>
+  <text x="52" y="148" class="panel-title">① 默认展开（空查询）</text>
+  <text x="52" y="170" class="panel-sub">最近 3 条 + 输入框上下文 + 原有频率列表</text>
+
+  <rect x="110" y="200" width="360" height="640" rx="14" fill="#ffffff" stroke="#dbe3ee" filter="url(#shadow)"/>
+
+  <!-- header -->
+  <rect x="110" y="200" width="360" height="52" rx="14" fill="#f8fafc"/>
+  <rect x="110" y="238" width="360" height="14" fill="#f8fafc"/>
+  <rect x="124" y="214" width="28" height="22" rx="6" fill="#0b7dda"/>
+  <text x="131" y="230" font-size="11" font-weight="700" fill="#ffffff">K</text>
+  <text x="160" y="231" class="card-title">快捷键</text>
+  <rect x="414" y="212" width="24" height="24" rx="7" fill="#ffffff" stroke="#e2e8f0"/>
+  <text x="422" y="229" font-size="14" font-weight="700" fill="#64748b">−</text>
+  <rect x="442" y="212" width="24" height="24" rx="7" fill="#ffffff" stroke="#e2e8f0"/>
+  <text x="449" y="229" font-size="14" font-weight="700" fill="#64748b">×</text>
+
+  <!-- search row -->
+  <rect x="120" y="260" width="236" height="32" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="132" y="280" class="search">搜索快捷键 / 功能…</text>
+  <rect x="362" y="260" width="34" height="32" rx="8" fill="#e8f2fd" stroke="#d6e7fb"/>
+  <text x="371" y="280" font-size="10" font-weight="700" fill="#0b7dda">⌨</text>
+  <rect x="402" y="260" width="58" height="32" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="415" y="280" class="btn">频率 ⇅</text>
+
+  <!-- recent chips -->
+  <text x="120" y="310" class="tiny">最近</text>
+  <rect x="148" y="298" width="88" height="20" rx="10" fill="#e8f2fd" stroke="#d6e7fb"/>
+  <text x="156" y="312" class="kbd" fill="#0b7dda">Ctrl+Shift+T</text>
+  <rect x="242" y="298" width="50" height="20" rx="10" fill="#e8f2fd" stroke="#d6e7fb"/>
+  <text x="250" y="312" class="kbd" fill="#0b7dda">Ctrl+W</text>
+  <rect x="298" y="298" width="50" height="20" rx="10" fill="#e8f2fd" stroke="#d6e7fb"/>
+  <text x="306" y="312" class="kbd" fill="#0b7dda">Ctrl+F</text>
+
+  <!-- input context bar -->
+  <rect x="120" y="330" width="340" height="30" rx="8" fill="#f0f7ff" stroke="#d6e7fb"/>
+  <text x="130" y="349" font-size="8.5" font-weight="700" fill="#0b7dda">输入框</text>
+  <text x="166" y="349" font-size="8.5" fill="#475569">Ctrl+C 复制 · Ctrl+V 粘贴 · Ctrl+Z 撤销 · Ctrl+A 全选</text>
+
+  <!-- list -->
+  <rect x="118" y="374" width="344" height="46" rx="8" fill="#e8f2fd" stroke="#0b7dda"/>
+  <text x="126" y="394" class="kbd">Ctrl</text>
+  <rect x="152" y="383" width="20" height="16" rx="4" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="158" y="394" class="kbd">T</text>
+  <text x="182" y="391" class="item">新建标签页</text>
+  <text x="182" y="406" class="item-small">标签页</text>
+  <rect x="420" y="386" width="24" height="16" rx="8" fill="#ffffff"/>
+  <text x="427" y="398" class="count">12</text>
+
+  <text x="126" y="446" class="kbd">Ctrl</text>
+  <rect x="152" y="435" width="20" height="16" rx="4" fill="#f1f5f9" stroke="#e2e8f0"/>
+  <text x="158" y="446" class="kbd">W</text>
+  <text x="182" y="443" class="item">关闭当前标签页</text>
+  <text x="182" y="458" class="item-small">标签页 · 备选 Ctrl F4</text>
+  <text x="426" y="450" class="count">8</text>
+  <line x1="120" y1="478" x2="460" y2="478" stroke="#f1f5f9"/>
+
+  <text x="126" y="504" class="kbd">Ctrl</text>
+  <rect x="152" y="493" width="30" height="16" rx="4" fill="#f1f5f9" stroke="#e2e8f0"/>
+  <text x="157" y="504" class="kbd">Shift</text>
+  <rect x="186" y="493" width="20" height="16" rx="4" fill="#f1f5f9" stroke="#e2e8f0"/>
+  <text x="192" y="504" class="kbd">T</text>
+  <text x="216" y="501" class="item">重新打开关闭的标签页</text>
+  <text x="216" y="516" class="item-small">标签页</text>
+  <text x="426" y="508" class="count">5</text>
+  <line x1="120" y1="536" x2="460" y2="536" stroke="#f1f5f9"/>
+
+  <text x="126" y="562" class="kbd">Ctrl</text>
+  <rect x="152" y="551" width="20" height="16" rx="4" fill="#f1f5f9" stroke="#e2e8f0"/>
+  <text x="158" y="562" class="kbd">F</text>
+  <text x="182" y="559" class="item">页内查找</text>
+  <text x="182" y="574" class="item-small">页面与查找 · 备选 F3</text>
+  <text x="426" y="566" class="count">3</text>
+  <line x1="120" y1="594" x2="460" y2="594" stroke="#f1f5f9"/>
+
+  <text x="126" y="620" class="kbd">Ctrl</text>
+  <rect x="152" y="609" width="20" height="16" rx="4" fill="#f1f5f9" stroke="#e2e8f0"/>
+  <text x="158" y="620" class="kbd">L</text>
+  <text x="182" y="617" class="item">聚焦地址栏</text>
+  <text x="182" y="632" class="item-small">地址栏 · 备选 Alt D / F4</text>
+  <text x="426" y="624" class="count">2</text>
+  <line x1="120" y1="652" x2="460" y2="652" stroke="#f1f5f9"/>
+
+  <text x="126" y="678" class="kbd">F3</text>
+  <text x="182" y="675" class="item">页内查找</text>
+  <text x="182" y="690" class="item-small">页面与查找</text>
+  <line x1="120" y1="710" x2="460" y2="710" stroke="#f1f5f9"/>
+
+  <text x="126" y="736" class="kbd">Ctrl</text>
+  <rect x="152" y="725" width="20" height="16" rx="4" fill="#f1f5f9" stroke="#e2e8f0"/>
+  <text x="158" y="736" class="kbd">H</text>
+  <text x="182" y="733" class="item">打开历史记录</text>
+  <text x="182" y="748" class="item-small">收藏与历史</text>
+
+  <!-- footer -->
+  <line x1="110" y1="792" x2="470" y2="792" stroke="#e2e8f0"/>
+  <text x="122" y="812" class="hint">↑↓ 选择 · Enter 记录选中项</text>
+  <text x="122" y="826" class="tiny">空查询不计数</text>
+  <rect x="350" y="800" width="48" height="24" rx="7" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="361" y="816" class="btn">刷新</text>
+  <rect x="404" y="800" width="48" height="24" rx="7" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="415" y="816" class="btn">恢复</text>
+
+  <!-- annotations -->
+  <text x="52" y="882" class="anno">最近：按 Enter 记录过的快捷键，最多 3 条；点击滚动高亮，不计数。</text>
+  <text x="52" y="905" class="anno">输入框上下文：仅当打开卡片时页面焦点在输入框/文本域/contenteditable。</text>
+  <text x="52" y="928" class="anno">键盘：↑↓ 选择，Enter 记录选中项；空查询不计数；Esc 清空/收起。</text>
+  <text x="52" y="951" class="anno">无收藏、无独立常用分组；原频率排序保留；收起态不变。</text>
+
+  <!-- ==================== 2. 按键录入 ==================== -->
+  <rect x="580" y="112" width="520" height="858" rx="20" fill="#ffffff" stroke="#dbe3ee"/>
+  <text x="602" y="148" class="panel-title">② 按键录入（逐键）</text>
+  <text x="602" y="170" class="panel-sub">每按一个键填入一个键名；不要同时按组合</text>
+
+  <rect x="660" y="200" width="360" height="640" rx="14" fill="#ffffff" stroke="#dbe3ee" filter="url(#shadow)"/>
+
+  <!-- header -->
+  <rect x="660" y="200" width="360" height="52" rx="14" fill="#f8fafc"/>
+  <rect x="660" y="238" width="360" height="14" fill="#f8fafc"/>
+  <rect x="674" y="214" width="28" height="22" rx="6" fill="#0b7dda"/>
+  <text x="681" y="230" font-size="11" font-weight="700" fill="#ffffff">K</text>
+  <text x="710" y="231" class="card-title">快捷键</text>
+  <rect x="964" y="212" width="24" height="24" rx="7" fill="#ffffff" stroke="#e2e8f0"/>
+  <text x="972" y="229" font-size="14" font-weight="700" fill="#64748b">−</text>
+  <rect x="992" y="212" width="24" height="24" rx="7" fill="#ffffff" stroke="#e2e8f0"/>
+  <text x="999" y="229" font-size="14" font-weight="700" fill="#64748b">×</text>
+
+  <!-- token box -->
+  <rect x="670" y="260" width="236" height="34" rx="8" fill="#f0f7ff" stroke="#0b7dda"/>
+  <rect x="680" y="268" width="30" height="18" rx="5" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="686" y="280" class="kbd">Ctrl</text>
+  <text x="714" y="281" font-size="10" fill="#64748b">+</text>
+  <rect x="724" y="268" width="36" height="18" rx="5" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="729" y="280" class="kbd">Shift</text>
+  <text x="764" y="281" font-size="10" fill="#64748b">+</text>
+  <rect x="774" y="268" width="22" height="18" rx="5" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="780" y="280" class="kbd">T</text>
+  <rect x="804" y="272" width="2" height="12" fill="#0b7dda"/>
+  <text x="816" y="281" class="tiny">点击完成</text>
+  <rect x="912" y="260" width="58" height="34" rx="8" fill="#0b7dda"/>
+  <text x="927" y="281" font-size="10" font-weight="700" fill="#ffffff">完成</text>
+
+  <text x="670" y="314" font-size="9" font-weight="600" fill="#b45309">逐个按：Ctrl → Shift → T；不要同时按，否则会触发 Edge 快捷键。</text>
+
+  <!-- special key dropdown -->
+  <rect x="670" y="328" width="220" height="24" rx="7" fill="#ffffff" stroke="#e2e8f0"/>
+  <text x="680" y="343" class="tiny">特殊键：F1–F12 / Enter / Esc / Tab / 方向键</text>
+  <text x="876" y="343" class="tiny">▾</text>
+  <text x="900" y="343" class="tiny">或直接手输</text>
+
+  <!-- match result -->
+  <text x="670" y="378" class="tiny">匹配 1 条</text>
+  <rect x="668" y="388" width="344" height="46" rx="8" fill="#e8f2fd" stroke="#0b7dda"/>
+  <text x="676" y="408" class="kbd">Ctrl</text>
+  <rect x="702" y="397" width="30" height="16" rx="4" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="707" y="408" class="kbd">Shift</text>
+  <rect x="736" y="397" width="20" height="16" rx="4" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="742" y="408" class="kbd">T</text>
+  <text x="766" y="405" class="item">重新打开关闭的标签页</text>
+  <text x="766" y="420" class="item-small">标签页 · 官方快捷键</text>
+
+  <rect x="670" y="454" width="340" height="74" rx="9" fill="#fff7ed" stroke="#fed7aa"/>
+  <text x="682" y="474" font-size="9" font-weight="700" fill="#b45309">有哪些键不能直接按？</text>
+  <text x="682" y="491" font-size="8.5" fill="#9a3412">F1–F12、Enter、Esc、Ctrl+T/Ctrl+W 等浏览器保留键，</text>
+  <text x="682" y="507" font-size="8.5" fill="#9a3412">会被 Edge 先处理；请用“特殊键”下拉或直接手输。</text>
+
+  <text x="670" y="562" class="hint">输入框里填的是键名；动作名显示在结果列表。</text>
+  <text x="670" y="580" class="hint">Backspace 删除上一个键；Esc 退出录入。</text>
+
+  <!-- footer -->
+  <line x1="660" y1="792" x2="1020" y2="792" stroke="#e2e8f0"/>
+  <text x="672" y="812" class="hint">Enter 完成并搜索</text>
+  <text x="672" y="826" class="tiny">Tab 可录入为键名</text>
+  <rect x="900" y="800" width="48" height="24" rx="7" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="911" y="816" class="btn">清空</text>
+  <rect x="954" y="800" width="48" height="24" rx="7" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="965" y="816" class="btn">退出</text>
+
+  <!-- annotations -->
+  <text x="602" y="882" class="anno">逐键录入：Ctrl → Shift → T；每按一个键追加一个键名。</text>
+  <text x="602" y="905" class="anno">可捕获：Ctrl/Shift/Alt、字母数字、方向键、Home/End/Tab 等。</text>
+  <text x="602" y="928" class="anno">不能捕获：F1–F12、Enter、Esc、Ctrl+T/Ctrl+W 等保留键。</text>
+  <text x="602" y="951" class="anno">特殊键下拉/手输补齐；输入框只填键名，不填动作名。</text>
+
+  <!-- ==================== 3. 模糊搜索 ==================== -->
+  <rect x="1130" y="112" width="520" height="858" rx="20" fill="#ffffff" stroke="#dbe3ee"/>
+  <text x="1152" y="148" class="panel-title">③ 模糊搜索</text>
+  <text x="1152" y="170" class="panel-sub">分词 + 子序列 + 别名；相关性优先</text>
+
+  <rect x="1210" y="200" width="360" height="640" rx="14" fill="#ffffff" stroke="#dbe3ee" filter="url(#shadow)"/>
+
+  <!-- header -->
+  <rect x="1210" y="200" width="360" height="52" rx="14" fill="#f8fafc"/>
+  <rect x="1210" y="238" width="360" height="14" fill="#f8fafc"/>
+  <rect x="1224" y="214" width="28" height="22" rx="6" fill="#0b7dda"/>
+  <text x="1231" y="230" font-size="11" font-weight="700" fill="#ffffff">K</text>
+  <text x="1260" y="231" class="card-title">快捷键</text>
+  <rect x="1514" y="212" width="24" height="24" rx="7" fill="#ffffff" stroke="#e2e8f0"/>
+  <text x="1522" y="229" font-size="14" font-weight="700" fill="#64748b">−</text>
+  <rect x="1542" y="212" width="24" height="24" rx="7" fill="#ffffff" stroke="#e2e8f0"/>
+  <text x="1549" y="229" font-size="14" font-weight="700" fill="#64748b">×</text>
+
+  <!-- search row -->
+  <rect x="1220" y="260" width="276" height="32" rx="8" fill="#f8fafc" stroke="#0b7dda"/>
+  <text x="1232" y="280" font-size="10" fill="#1e293b">关闭 标签</text>
+  <rect x="1502" y="260" width="58" height="32" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="1515" y="280" class="btn">频率 ⇅</text>
+
+  <text x="1220" y="310" class="tiny">按相关性排序 · 频率仅做并列排序</text>
+
+  <!-- result 1 -->
+  <rect x="1218" y="322" width="344" height="48" rx="8" fill="#e8f2fd" stroke="#0b7dda"/>
+  <text x="1226" y="342" class="kbd">Ctrl</text>
+  <rect x="1252" y="331" width="20" height="16" rx="4" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="1258" y="342" class="kbd">W</text>
+  <text x="1282" y="339" class="item">关闭当前标签页</text>
+  <text x="1282" y="354" class="item-small">标签页 · 备选 Ctrl F4</text>
+  <text x="1450" y="346" class="count">8</text>
+
+  <!-- result 2 -->
+  <text x="1226" y="394" class="kbd">Ctrl</text>
+  <rect x="1252" y="383" width="30" height="16" rx="4" fill="#f1f5f9" stroke="#e2e8f0"/>
+  <text x="1257" y="394" class="kbd">Shift</text>
+  <rect x="1286" y="383" width="20" height="16" rx="4" fill="#f1f5f9" stroke="#e2e8f0"/>
+  <text x="1292" y="394" class="kbd">T</text>
+  <text x="1316" y="391" class="item">重新打开关闭的标签页</text>
+  <text x="1316" y="406" class="item-small">标签页</text>
+  <text x="1450" y="398" class="count">5</text>
+  <line x1="1220" y1="422" x2="1560" y2="422" stroke="#f1f5f9"/>
+
+  <!-- alias tip -->
+  <rect x="1220" y="440" width="340" height="60" rx="9" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="1232" y="460" font-size="9" font-weight="700" fill="#475569">别名示例</text>
+  <text x="1232" y="477" font-size="8.5" fill="#64748b">搜「关掉页面」「undo close」「devtools」也能命中。</text>
+  <text x="1232" y="492" font-size="8.5" fill="#64748b">数据里给每条加 2–4 个口语别名即可，不引入拼音库。</text>
+
+  <!-- footer -->
+  <line x1="1210" y1="792" x2="1570" y2="792" stroke="#e2e8f0"/>
+  <text x="1222" y="812" class="hint">有搜索词时隐藏最近/上下文条</text>
+  <text x="1222" y="826" class="tiny">Esc 清空；再按 Esc 收起</text>
+  <rect x="1454" y="800" width="48" height="24" rx="7" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="1465" y="816" class="btn">刷新</text>
+  <rect x="1508" y="800" width="48" height="24" rx="7" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="1519" y="816" class="btn">恢复</text>
+
+  <!-- annotations -->
+  <text x="1152" y="882" class="anno">分词 AND：关闭 + 标签；顺序无关。</text>
+  <text x="1152" y="905" class="anno">排序：完全匹配 &gt; 标题 &gt; 别名 &gt; 按键 &gt; 分类 &gt; 子序列。</text>
+  <text x="1152" y="928" class="anno">频率只做并列排序；不做拼音首字母。</text>
+  <text x="1152" y="951" class="anno">无结果时提示换词，或切到按键录入。</text>
+
+  <!-- bottom summary -->
+  <rect x="30" y="990" width="1620" height="40" rx="12" fill="#0f172a"/>
+  <text x="50" y="1015" class="bottom">已确认：最近 3 条 · 无收藏/常用组 · 无执行 · 输入框上下文 · 逐键录入 · 键盘选择 · 模糊匹配 · PDF 手动分类 · 无 Mac/edge:///拼音。确认布局后我再改代码。</text>
+</svg>
