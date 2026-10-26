@@ -8,11 +8,26 @@ function clearBadge() {
   }
 }
 
+async function toggleOnTab(tabId) {
+  try {
+    await chrome.tabs.sendMessage(tabId, { type: 'ESC_TOGGLE_CARD' });
+    return;
+  } catch (e) {
+    // 页面在扩展安装/更新前就打开时，content script 还不存在：补注入一次再发消息
+  }
+
+  await chrome.scripting.executeScript({
+    target: { tabId },
+    files: ['content.js'],
+  });
+  await chrome.tabs.sendMessage(tabId, { type: 'ESC_TOGGLE_CARD' });
+}
+
 chrome.action.onClicked.addListener(async (tab) => {
   if (!tab?.id) return;
 
   try {
-    await chrome.tabs.sendMessage(tab.id, { type: 'ESC_TOGGLE_CARD' });
+    await toggleOnTab(tab.id);
     clearBadge();
   } catch (e) {
     console.warn('[快捷键卡片] 当前页面无法显示卡片（可能是 edge:// 等受限页面）');

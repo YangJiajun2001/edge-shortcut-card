@@ -1,6 +1,11 @@
 (() => {
-  if (window.__ESC_CARD_OVERLAY__) return;
-  window.__ESC_CARD_OVERLAY__ = true;
+  const BUILD = '1.2.1';
+  if (window.__ESC_CARD_OVERLAY__ === BUILD) return;
+  if (window.__ESC_CARD_OVERLAY__) {
+    // 扩展更新后，旧 content script 的上下文可能已经失效；清掉旧节点重新初始化
+    document.querySelectorAll('[data-edge-shortcut-overlay], [data-edge-shortcut-card]').forEach((el) => el.remove());
+  }
+  window.__ESC_CARD_OVERLAY__ = BUILD;
 
   const STATS_KEY = 'edgeShortcutSearchStats';
   const MODE_KEY = 'edgeShortcutCardMode';
@@ -116,7 +121,7 @@
   };
 
   // 清掉旧版本可能残留的网页卡片
-  document.querySelectorAll('[data-edge-shortcut-card]').forEach((el) => el.remove());
+  document.querySelectorAll('[data-edge-shortcut-overlay], [data-edge-shortcut-card]').forEach((el) => el.remove());
 
   // ============ 宿主 + Shadow DOM ============
   const host = document.createElement('div');
