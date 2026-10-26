@@ -1,0 +1,285 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1040" viewBox="0 0 1600 1040">
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#0f172a" flood-opacity="0.14"/>
+    </filter>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#0f172a" flood-opacity="0.10"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8"/>
+    </marker>
+    <style>
+      text { font-family: "Microsoft YaHei", "Segoe UI", system-ui, sans-serif; }
+      .title { font-size: 28px; font-weight: 700; fill: #111827; }
+      .subtitle { font-size: 14px; fill: #64748b; }
+      .panel-title { font-size: 17px; font-weight: 700; fill: #0f172a; }
+      .panel-sub { font-size: 11px; fill: #64748b; }
+      .label { font-size: 11px; fill: #64748b; }
+      .tiny { font-size: 10px; fill: #94a3b8; }
+      .card-title { font-size: 15px; font-weight: 700; fill: #0f172a; }
+      .item-title { font-size: 12px; font-weight: 600; fill: #1e293b; }
+      .item-cat { font-size: 10px; fill: #94a3b8; }
+      .key { font-size: 10px; font-weight: 600; fill: #334155; }
+      .hint { font-size: 10px; fill: #64748b; }
+      .btn { font-size: 10px; font-weight: 600; fill: #334155; }
+      .count { font-size: 10px; font-weight: 700; fill: #0b7dda; }
+      .pro { font-size: 11px; fill: #475569; }
+      .rule { font-size: 12px; fill: #334155; }
+      .ruleLight { font-size: 12px; fill: #e2e8f0; }
+      .white { fill: #ffffff; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="1040" fill="#eef2f7"/>
+
+  <text x="60" y="58" class="title">Edge 快捷键卡片 · 前端设计草案 v1</text>
+  <text x="60" y="88" class="subtitle">先确认形态，再动代码 · 搜索次数 = 按 Enter 给首条结果 +1 · 支持收起 / 展开</text>
+
+  <!-- ==================== 方案 A ==================== -->
+  <rect x="40" y="120" width="760" height="850" rx="20" fill="#ffffff" stroke="#dbe3ee"/>
+  <text x="64" y="156" class="panel-title">方案 A · 页面内悬浮卡片</text>
+  <text x="64" y="176" class="panel-sub">推荐：最接近“扎在页面里”的原始感觉，可收起为贴边胶囊</text>
+
+  <!-- Browser mock A -->
+  <rect x="64" y="196" width="712" height="700" rx="16" fill="#f8fafc" stroke="#d8e0ea"/>
+  <rect x="64" y="196" width="712" height="62" rx="16" fill="#f1f5f9"/>
+  <rect x="64" y="240" width="712" height="18" fill="#f1f5f9"/>
+  <circle cx="88" cy="222" r="5" fill="#fca5a5"/>
+  <circle cx="106" cy="222" r="5" fill="#fcd34d"/>
+  <circle cx="124" cy="222" r="5" fill="#86efac"/>
+  <rect x="148" y="210" width="360" height="24" rx="12" fill="#ffffff" stroke="#e2e8f0"/>
+  <text x="162" y="226" class="tiny">edge://shortcuts</text>
+  <rect x="548" y="210" width="24" height="24" rx="7" fill="#ffffff" stroke="#e2e8f0"/>
+  <text x="556" y="227" class="tiny">⋯</text>
+
+  <!-- Fake page content -->
+  <rect x="90" y="288" width="280" height="16" rx="8" fill="#e2e8f0"/>
+  <rect x="90" y="316" width="210" height="10" rx="5" fill="#eef2f7"/>
+  <rect x="90" y="344" width="640" height="76" rx="12" fill="#ffffff" stroke="#eef2f7"/>
+  <rect x="106" y="362" width="200" height="10" rx="5" fill="#e2e8f0"/>
+  <rect x="106" y="382" width="480" height="8" rx="4" fill="#eef2f7"/>
+  <rect x="90" y="438" width="640" height="76" rx="12" fill="#ffffff" stroke="#eef2f7"/>
+  <rect x="106" y="456" width="180" height="10" rx="5" fill="#e2e8f0"/>
+  <rect x="106" y="476" width="440" height="8" rx="4" fill="#eef2f7"/>
+  <rect x="90" y="532" width="640" height="76" rx="12" fill="#ffffff" stroke="#eef2f7"/>
+  <rect x="106" y="550" width="220" height="10" rx="5" fill="#e2e8f0"/>
+  <rect x="106" y="570" width="380" height="8" rx="4" fill="#eef2f7"/>
+
+  <!-- Collapsed pill -->
+  <text x="98" y="700" class="label">收起态</text>
+  <rect x="98" y="710" width="126" height="40" rx="20" fill="#0b7dda" filter="url(#softShadow)"/>
+  <rect x="110" y="720" width="20" height="20" rx="5" fill="#ffffff" opacity="0.22"/>
+  <text x="116" y="735" font-size="11" font-weight="700" fill="#ffffff">⌨</text>
+  <text x="138" y="735" font-size="12" font-weight="700" fill="#ffffff">快捷键</text>
+  <path d="M 212 730 l 4 0 l 0 -4" stroke="#ffffff" stroke-width="1.6" fill="none"/>
+  <path d="M 216 726 l 0 8 l -4 0" stroke="#ffffff" stroke-width="1.6" fill="none"/>
+  <text x="98" y="772" class="tiny">贴边悬浮，点击展开；可沿边缘拖动</text>
+
+  <!-- Expanded card -->
+  <text x="430" y="234" class="label">展开态（可拖动）</text>
+  <rect x="430" y="244" width="326" height="520" rx="16" fill="#ffffff" stroke="#dbe3ee" filter="url(#shadow)"/>
+
+  <!-- Header -->
+  <rect x="430" y="244" width="326" height="54" rx="16" fill="#f8fafc"/>
+  <rect x="430" y="282" width="326" height="16" fill="#f8fafc"/>
+  <rect x="446" y="262" width="28" height="22" rx="6" fill="#0b7dda"/>
+  <rect x="451" y="268" width="4" height="3" rx="1" fill="#ffffff"/>
+  <rect x="458" y="268" width="4" height="3" rx="1" fill="#ffffff"/>
+  <rect x="465" y="268" width="4" height="3" rx="1" fill="#ffffff"/>
+  <rect x="451" y="274" width="18" height="3" rx="1.5" fill="#ffffff" opacity="0.85"/>
+  <text x="486" y="279" class="card-title">快捷键</text>
+  <rect x="664" y="260" width="24" height="24" rx="7" fill="#ffffff" stroke="#e2e8f0"/>
+  <text x="672" y="277" font-size="15" font-weight="700" fill="#64748b">−</text>
+  <rect x="694" y="260" width="24" height="24" rx="7" fill="#ffffff" stroke="#e2e8f0"/>
+  <text x="701" y="277" font-size="15" font-weight="700" fill="#64748b">×</text>
+  <text x="664" y="298" class="tiny">点 − 收起</text>
+
+  <!-- Search -->
+  <rect x="446" y="312" width="294" height="34" rx="9" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="458" y="334" font-size="11" fill="#94a3b8">搜索快捷键 / 功能…</text>
+  <rect x="446" y="356" width="62" height="24" rx="12" fill="#e8f2fd"/>
+  <text x="458" y="372" class="count">频率 ⇅</text>
+  <text x="520" y="372" class="tiny">Enter 记录首条结果</text>
+
+  <!-- List rows -->
+  <g>
+    <text x="446" y="406" class="key">Ctrl</text>
+    <rect x="474" y="394" width="26" height="18" rx="5" fill="#f1f5f9" stroke="#e2e8f0"/>
+    <text x="481" y="406" class="key">T</text>
+    <text x="514" y="404" class="item-title">新建标签页</text>
+    <text x="514" y="420" class="item-cat">标签页</text>
+    <rect x="706" y="398" width="24" height="17" rx="8.5" fill="#e8f2fd"/>
+    <text x="713" y="410" class="count">12</text>
+    <line x1="446" y1="434" x2="740" y2="434" stroke="#f1f5f9"/>
+  </g>
+  <g>
+    <text x="446" y="464" class="key">Ctrl</text>
+    <rect x="474" y="452" width="26" height="18" rx="5" fill="#f1f5f9" stroke="#e2e8f0"/>
+    <text x="481" y="464" class="key">W</text>
+    <text x="514" y="462" class="item-title">关闭当前标签页</text>
+    <text x="514" y="478" class="item-cat">标签页</text>
+    <rect x="706" y="456" width="24" height="17" rx="8.5" fill="#e8f2fd"/>
+    <text x="713" y="468" class="count">8</text>
+    <line x1="446" y1="492" x2="740" y2="492" stroke="#f1f5f9"/>
+  </g>
+  <g>
+    <text x="446" y="522" class="key">Ctrl</text>
+    <rect x="474" y="510" width="34" height="18" rx="5" fill="#f1f5f9" stroke="#e2e8f0"/>
+    <text x="479" y="522" class="key">Shift</text>
+    <rect x="512" y="510" width="26" height="18" rx="5" fill="#f1f5f9" stroke="#e2e8f0"/>
+    <text x="519" y="522" class="key">T</text>
+    <text x="552" y="520" class="item-title">重新打开关闭的标签页</text>
+    <text x="552" y="536" class="item-cat">标签页</text>
+    <rect x="706" y="514" width="24" height="17" rx="8.5" fill="#e8f2fd"/>
+    <text x="713" y="526" class="count">5</text>
+    <line x1="446" y1="550" x2="740" y2="550" stroke="#f1f5f9"/>
+  </g>
+  <g>
+    <text x="446" y="580" class="key">Ctrl</text>
+    <rect x="474" y="568" width="26" height="18" rx="5" fill="#f1f5f9" stroke="#e2e8f0"/>
+    <text x="481" y="580" class="key">F</text>
+    <text x="514" y="578" class="item-title">页内查找</text>
+    <text x="514" y="594" class="item-cat">页面</text>
+    <rect x="706" y="572" width="24" height="17" rx="8.5" fill="#e8f2fd"/>
+    <text x="713" y="584" class="count">3</text>
+    <line x1="446" y1="608" x2="740" y2="608" stroke="#f1f5f9"/>
+  </g>
+  <g>
+    <text x="446" y="638" class="key">Ctrl</text>
+    <rect x="474" y="626" width="26" height="18" rx="5" fill="#f1f5f9" stroke="#e2e8f0"/>
+    <text x="481" y="638" class="key">L</text>
+    <text x="514" y="636" class="item-title">聚焦地址栏</text>
+    <text x="514" y="652" class="item-cat">地址栏 · 备选 Alt D</text>
+    <rect x="706" y="630" width="24" height="17" rx="8.5" fill="#e8f2fd"/>
+    <text x="713" y="642" class="count">2</text>
+  </g>
+
+  <!-- Footer -->
+  <line x1="430" y1="704" x2="756" y2="704" stroke="#e2e8f0"/>
+  <text x="446" y="726" class="hint">Enter 记录首条结果的搜索次数</text>
+  <text x="446" y="758" class="tiny">点击条目不计数 · 点击列表回到搜索框</text>
+  <rect x="620" y="718" width="52" height="26" rx="7" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="634" y="735" class="btn">刷新</text>
+  <rect x="680" y="718" width="52" height="26" rx="7" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="694" y="735" class="btn">恢复</text>
+
+
+  <!-- Pros / cons A -->
+  <text x="64" y="920" class="pro">✓ 真正浮在网页上，保留“扎在页面”的感觉；可拖动、贴边收起</text>
+  <text x="64" y="942" class="pro">✓ 展开 / 收起 / 位置状态可跨标签页同步保存</text>
+  <text x="64" y="964" class="pro">△ 换页或刷新会重建卡片；edge:// 页面无法注入悬浮层</text>
+
+  <!-- ==================== 方案 B ==================== -->
+  <rect x="820" y="120" width="740" height="850" rx="20" fill="#ffffff" stroke="#dbe3ee"/>
+  <text x="844" y="156" class="panel-title">方案 B · Edge 侧边栏</text>
+  <text x="844" y="176" class="panel-sub">备选：浏览器级，但不再浮在网页上；收起态只能是窄条或关闭</text>
+
+  <!-- Browser mock B -->
+  <rect x="844" y="196" width="692" height="700" rx="16" fill="#f8fafc" stroke="#d8e0ea"/>
+  <rect x="844" y="196" width="692" height="62" rx="16" fill="#f1f5f9"/>
+  <rect x="844" y="240" width="692" height="18" fill="#f1f5f9"/>
+  <circle cx="868" cy="222" r="5" fill="#fca5a5"/>
+  <circle cx="886" cy="222" r="5" fill="#fcd34d"/>
+  <circle cx="904" cy="222" r="5" fill="#86efac"/>
+  <rect x="928" y="210" width="360" height="24" rx="12" fill="#ffffff" stroke="#e2e8f0"/>
+  <text x="942" y="226" class="tiny">edge://shortcuts</text>
+
+  <!-- Page content -->
+  <rect x="870" y="288" width="250" height="16" rx="8" fill="#e2e8f0"/>
+  <rect x="870" y="316" width="180" height="10" rx="5" fill="#eef2f7"/>
+  <rect x="870" y="344" width="300" height="76" rx="12" fill="#ffffff" stroke="#eef2f7"/>
+  <rect x="886" y="362" width="180" height="10" rx="5" fill="#e2e8f0"/>
+  <rect x="886" y="382" width="250" height="8" rx="4" fill="#eef2f7"/>
+  <rect x="870" y="438" width="300" height="76" rx="12" fill="#ffffff" stroke="#eef2f7"/>
+  <rect x="886" y="456" width="160" height="10" rx="5" fill="#e2e8f0"/>
+  <rect x="886" y="476" width="230" height="8" rx="4" fill="#eef2f7"/>
+  <rect x="870" y="532" width="300" height="76" rx="12" fill="#ffffff" stroke="#eef2f7"/>
+  <rect x="886" y="550" width="190" height="10" rx="5" fill="#e2e8f0"/>
+  <rect x="886" y="570" width="210" height="8" rx="4" fill="#eef2f7"/>
+
+  <!-- Side panel -->
+  <rect x="1200" y="196" width="320" height="700" fill="#ffffff" stroke="#dbe3ee"/>
+  <rect x="1200" y="196" width="320" height="52" fill="#f8fafc"/>
+  <rect x="1214" y="212" width="26" height="20" rx="6" fill="#0b7dda"/>
+  <text x="1220" y="227" font-size="10" font-weight="700" fill="#ffffff">⌨</text>
+  <text x="1248" y="228" class="card-title">快捷键</text>
+  <rect x="1456" y="212" width="22" height="22" rx="6" fill="#ffffff" stroke="#e2e8f0"/>
+  <text x="1463" y="228" font-size="14" font-weight="700" fill="#64748b">−</text>
+  <rect x="1484" y="212" width="22" height="22" rx="6" fill="#ffffff" stroke="#e2e8f0"/>
+  <text x="1491" y="228" font-size="14" font-weight="700" fill="#64748b">×</text>
+
+  <rect x="1214" y="260" width="292" height="32" rx="9" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="1226" y="281" font-size="11" fill="#94a3b8">搜索快捷键 / 功能…</text>
+  <rect x="1214" y="302" width="58" height="22" rx="11" fill="#e8f2fd"/>
+  <text x="1225" y="317" class="count">频率 ⇅</text>
+
+  <g>
+    <rect x="1214" y="342" width="292" height="54" rx="8" fill="#ffffff"/>
+    <text x="1226" y="360" class="key">Ctrl</text>
+    <rect x="1252" y="349" width="24" height="16" rx="5" fill="#f1f5f9" stroke="#e2e8f0"/>
+    <text x="1258" y="360" class="key">T</text>
+    <text x="1288" y="358" class="item-title">新建标签页</text>
+    <text x="1288" y="374" class="item-cat">标签页</text>
+    <rect x="1472" y="352" width="24" height="16" rx="8" fill="#e8f2fd"/>
+    <text x="1479" y="364" class="count">12</text>
+    <line x1="1214" y1="396" x2="1506" y2="396" stroke="#f1f5f9"/>
+  </g>
+  <g>
+    <rect x="1214" y="402" width="292" height="54" rx="8" fill="#ffffff"/>
+    <text x="1226" y="420" class="key">Ctrl</text>
+    <rect x="1252" y="409" width="24" height="16" rx="5" fill="#f1f5f9" stroke="#e2e8f0"/>
+    <text x="1258" y="420" class="key">W</text>
+    <text x="1288" y="418" class="item-title">关闭当前标签页</text>
+    <text x="1288" y="434" class="item-cat">标签页</text>
+    <rect x="1472" y="412" width="24" height="16" rx="8" fill="#e8f2fd"/>
+    <text x="1479" y="424" class="count">8</text>
+    <line x1="1214" y1="456" x2="1506" y2="456" stroke="#f1f5f9"/>
+  </g>
+  <g>
+    <rect x="1214" y="462" width="292" height="54" rx="8" fill="#ffffff"/>
+    <text x="1226" y="480" class="key">Ctrl</text>
+    <rect x="1252" y="469" width="32" height="16" rx="5" fill="#f1f5f9" stroke="#e2e8f0"/>
+    <text x="1257" y="480" class="key">Shift</text>
+    <rect x="1288" y="469" width="24" height="16" rx="5" fill="#f1f5f9" stroke="#e2e8f0"/>
+    <text x="1294" y="480" class="key">T</text>
+    <text x="1324" y="478" class="item-title">重新打开关闭的标签页</text>
+    <text x="1324" y="494" class="item-cat">标签页</text>
+    <rect x="1472" y="472" width="24" height="16" rx="8" fill="#e8f2fd"/>
+    <text x="1479" y="484" class="count">5</text>
+    <line x1="1214" y1="516" x2="1506" y2="516" stroke="#f1f5f9"/>
+  </g>
+  <g>
+    <rect x="1214" y="522" width="292" height="54" rx="8" fill="#ffffff"/>
+    <text x="1226" y="540" class="key">Ctrl</text>
+    <rect x="1252" y="529" width="24" height="16" rx="5" fill="#f1f5f9" stroke="#e2e8f0"/>
+    <text x="1258" y="540" class="key">F</text>
+    <text x="1288" y="538" class="item-title">页内查找</text>
+    <text x="1288" y="554" class="item-cat">页面</text>
+    <rect x="1472" y="532" width="24" height="16" rx="8" fill="#e8f2fd"/>
+    <text x="1479" y="544" class="count">3</text>
+  </g>
+
+  <!-- Side panel footer -->
+  <line x1="1200" y1="736" x2="1520" y2="736" stroke="#e2e8f0"/>
+  <text x="1214" y="758" class="hint">Enter 记录首条结果</text>
+  <rect x="1330" y="748" width="50" height="24" rx="7" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="1343" y="764" class="btn">刷新</text>
+  <rect x="1388" y="748" width="50" height="24" rx="7" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="1401" y="764" class="btn">恢复</text>
+
+  <!-- Collapsed rail inset -->
+  <rect x="1112" y="646" width="56" height="150" rx="12" fill="#0b7dda" filter="url(#softShadow)"/>
+  <text x="1130" y="680" font-size="16" font-weight="700" fill="#ffffff">⌨</text>
+  <text x="1126" y="730" font-size="14" font-weight="700" fill="#ffffff">›</text>
+  <text x="1112" y="820" class="tiny">收起态：窄条 / 关闭</text>
+
+  <!-- Pros / cons B -->
+  <text x="844" y="920" class="pro">✓ 浏览器级：切标签页不消失；edge:// 页面也能用</text>
+  <text x="844" y="942" class="pro">△ 不能浮在网页上；宽度和样式受侧边栏限制</text>
+  <text x="844" y="964" class="pro">△ 收起只能做窄条或直接关闭，不如方案 A 自然</text>
+
+  <!-- Bottom rule -->
+  <rect x="40" y="986" width="1520" height="36" rx="12" fill="#0f172a"/>
+  <text x="60" y="1009" class="ruleLight">交互规则：搜索框 Enter → 当前首条结果搜索次数 +1；点击条目不计数；刷新 / 恢复；收起 / 展开状态全局保存。请选 A 或 B，确认后我再改代码。</text>
+</svg>

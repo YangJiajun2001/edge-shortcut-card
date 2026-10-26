@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Edge 快捷键</title>
+  <link rel="stylesheet" href="card.css">
+</head>
+<body>
+  <div class="card">
+    <header class="header">
+      <input class="search" type="text" placeholder="搜索快捷键 / 功能…" spellcheck="false" autocomplete="off" />
+      <button class="btn sort" type="button" title="切换排序方式">频率</button>
+      <button class="btn close" type="button" title="关闭卡片窗口">×</button>
+    </header>
+
+    <div class="list"></div>
+
+    <footer class="footer">
+      <span class="hint">回车记录首条结果的搜索次数</span>
+      <div class="actions">
+        <button class="btn small refresh" type="button" title="重新读取搜索次数并刷新列表">刷新</button>
+        <button class="btn small restore" type="button" title="清空搜索次数并恢复默认数据">恢复</button>
+      </div>
+    </footer>
+
+    <div class="toast" role="status" aria-live="polite"></div>
+  </div>
+
+  <script src="content.js"></script>
+</body>
+</html>
