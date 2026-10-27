@@ -1,5 +1,5 @@
 (() => {
-  const BUILD = '1.3.0';
+  const BUILD = '1.4.0';
   if (window.__ESC_CARD_OVERLAY__ === BUILD) return;
   if (window.__ESC_CARD_OVERLAY__) {
     // 扩展更新后，旧 content script 的上下文可能已经失效；清掉旧节点重新初始化
@@ -218,6 +218,7 @@
     lastEditable: null,
     captureMode: false,
     captureKeys: [],
+    keyQuery: false,
   };
 
   // 清掉旧版本可能残留的网页卡片
@@ -669,7 +670,7 @@
 
       <div class="search-row">
         <input class="search" type="text" placeholder="搜索快捷键 / 功能…" spellcheck="false" autocomplete="off" />
-        <button class="btn capture" type="button" title="按组合查（逐键录入）">⌨</button>
+        <button class="btn capture" type="button" title="按组合查（逐键录入，F2）">⌨</button>
         <button class="btn sort" type="button" title="切换排序方式">频率</button>
       </div>
 
@@ -684,7 +685,7 @@
       </div>
 
       <div class="capture-row" hidden>
-        <span class="capture-hint">逐个按 Ctrl → Shift → T；不要同时按，否则会触发 Edge 快捷键。</span>
+        <span class="capture-hint">逐个按 Ctrl → Shift → T；不要同时按。+= 键记为 Plus，- 键记为 Minus。</span>
         <select class="special-key" title="特殊键">
           <option value="">特殊键…</option>
           <option value="F1">F1</option>
@@ -712,6 +713,8 @@
           <option value="←">←</option>
           <option value="→">→</option>
           <option value="Delete">Delete</option>
+          <option value="+">+ / =</option>
+          <option value="-">- / _</option>
         </select>
         <button class="btn small capture-done" type="button">完成</button>
       </div>
@@ -849,6 +852,75 @@
     return false;
   }
 
+  function normalizeKeyToken(value) {
+    const raw = String(value).trim().toLowerCase();
+    const map = {
+      control: 'ctrl',
+      ctrl: 'ctrl',
+      option: 'alt',
+      alt: 'alt',
+      shift: 'shift',
+      escape: 'esc',
+      esc: 'esc',
+      del: 'delete',
+      delete: 'delete',
+      pageup: 'pgup',
+      pgup: 'pgup',
+      pagedown: 'pgdn',
+      pgdn: 'pgdn',
+      ' ': 'space',
+      space: 'space',
+      plus: '+',
+      '=': '+',
+      add: '+',
+      minus: '-',
+      subtract: '-',
+      arrowup: '↑',
+      arrowdown: '↓',
+      arrowleft: '←',
+      arrowright: '→',
+      return: 'enter',
+    };
+    return map[raw] || raw;
+  }
+
+  function displayKeyToken(token) {
+    return ({ '+': 'Plus', '-': 'Minus' })[token] || token;
+  }
+
+  function formatKeyCombo(combo) {
+    return combo.map(displayKeyToken).join('+');
+  }
+
+  function comboHasKeys(combo, tokens) {
+    const parts = combo.map(normalizeKeyToken);
+    return tokens.every((token) => parts.includes(token));
+  }
+
+  function getKeyFilteredList() {
+    const tokens = state.captureKeys.map(normalizeKeyToken).filter(Boolean);
+    if (!tokens.length) return null;
+
+    const cnt = (id) => state.stats[id] || 0;
+    return SHORTCUTS
+      .filter((item) => item.keys.some((combo) => comboHasKeys(combo, tokens)))
+      .sort((a, b) => {
+        const aExact = a.keys.some((combo) => combo.length === tokens.length && comboHasKeys(combo, tokens)) ? 0 : 1;
+        const bExact = b.keys.some((combo) => combo.length === tokens.length && comboHasKeys(combo, tokens)) ? 0 : 1;
+        if (aExact !== bExact) return aExact - bExact;
+
+        if (state.sortBy === 'frequency') {
+          const byCount = cnt(b.id) - cnt(a.id);
+          if (byCount) return byCount;
+        } else if (state.sortBy === 'category') {
+          const byCategory = a.cat.localeCompare(b.cat, 'zh');
+          if (byCategory) return byCategory;
+        }
+
+        return a.title.localeCompare(b.title, 'zh');
+      });
+  }
+
   function scoreShortcut(item, tokens, normalizedQuery) {
     const title = normalizeSearchText(item.title);
     const cat = normalizeSearchText(item.cat);
@@ -903,6 +975,11 @@
   function getVisibleList() {
     const rawQuery = state.query.trim();
     const cnt = (id) => state.stats[id] || 0;
+
+    if (state.keyQuery) {
+      const keyList = getKeyFilteredList();
+      if (keyList) return keyList;
+    }
 
     if (!rawQuery) {
       let arr = SHORTCUTS;
@@ -973,9 +1050,9 @@
       const count = state.stats[s.id] || 0;
       const primary = s.keys[0];
       const keyHtml = primary
-        .map((k) => `<kbd>${escapeHtml(k)}</kbd>`)
+        .map((k) => `<kbd>${escapeHtml(displayKeyToken(k))}</kbd>`)
         .join('<span class="plus">+</span>');
-      const altText = s.keys.slice(1).map((combo) => combo.join(' ')).join(' / ');
+      const altText = s.keys.slice(1).map((combo) => combo.map(displayKeyToken).join(' ')).join(' / ');
       const catText = altText ? `${s.cat} · 备选 ${altText}` : s.cat;
       const selected = s.id === state.selectedId ? ' selected' : '';
 
@@ -1142,11 +1219,11 @@
 
     if (state.captureMode) {
       hintMain.textContent = 'Backspace 删除上一个 · Enter 完成';
-      hintSub.textContent = 'Esc 退出录入';
+      hintSub.textContent = 'F2 也可完成 · Esc 退出录入';
       footerActions.hidden = true;
     } else {
       hintMain.textContent = '↑↓ 选择 · Enter 记录选中项';
-      hintSub.textContent = '空查询不计数 · 点击条目不计数';
+      hintSub.textContent = 'F2 按键录入 · 空查询不计数';
       footerActions.hidden = false;
     }
   }
@@ -1161,7 +1238,7 @@
       const chip = document.createElement('button');
       chip.type = 'button';
       chip.className = 'recent-chip';
-      chip.textContent = item.keys[0].join('+');
+      chip.textContent = formatKeyCombo(item.keys[0]);
       chip.title = item.title;
       chip.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -1217,7 +1294,7 @@
     const text = EDIT_CONTEXT_IDS
       .map((id) => SHORTCUT_BY_ID.get(id))
       .filter(Boolean)
-      .map((item) => `${item.keys[0].join('+')} ${item.title}`)
+      .map((item) => `${formatKeyCombo(item.keys[0])} ${item.title}`)
       .join(' · ');
 
     contextText.textContent = text;
@@ -1236,8 +1313,9 @@
 
   // ============ 逐键录入 ============
   function updateCaptureDisplay() {
-    searchEl.value = state.captureKeys.join(' + ');
+    searchEl.value = state.captureKeys.map(displayKeyToken).join(' + ');
     state.query = state.captureKeys.join(' ');
+    state.keyQuery = true;
     state.selectedId = null;
     render(true);
   }
@@ -1245,6 +1323,7 @@
   function resetCaptureState() {
     state.captureMode = false;
     state.captureKeys = [];
+    state.keyQuery = false;
     searchEl.readOnly = false;
     searchEl.placeholder = '搜索快捷键 / 功能…';
     sortBtn.hidden = false;
@@ -1256,6 +1335,7 @@
     state.captureMode = true;
     state.captureKeys = [];
     state.query = '';
+    state.keyQuery = true;
     state.selectedId = null;
     searchEl.value = '';
     searchEl.readOnly = true;
@@ -1272,7 +1352,9 @@
 
     const keys = state.captureKeys.slice();
     resetCaptureState();
-    searchEl.value = keys.join(' + ');
+    state.captureKeys = keys;
+    state.keyQuery = true;
+    searchEl.value = keys.map(displayKeyToken).join(' + ');
     state.query = keys.join(' ');
     state.selectedId = null;
     render(true);
@@ -1320,6 +1402,18 @@
     if (event.key === 'Backspace') {
       state.captureKeys.pop();
       updateCaptureDisplay();
+      return;
+    }
+    if (event.key === '=' || event.key === '+') {
+      addCaptureKey('+');
+      return;
+    }
+    if (event.key === '-') {
+      addCaptureKey('-');
+      return;
+    }
+    if (event.key === '_') {
+      addCaptureKey('-');
       return;
     }
     if (/^F([1-9]|1[0-2])$/.test(event.key)) {
@@ -1565,6 +1659,8 @@
       state.sortBy = 'frequency';
       state.recent = [];
       state.selectedId = null;
+      state.keyQuery = false;
+      state.captureKeys = [];
       recentVersion += 1;
       sortVersion += 1;
       lastRecordAt = 0;
@@ -1739,12 +1835,23 @@
   searchEl.addEventListener('input', () => {
     if (state.captureMode) return;
 
+    state.keyQuery = false;
+    state.captureKeys = [];
     state.query = searchEl.value;
     state.selectedId = null;
     render(true);
   });
 
   searchEl.addEventListener('keydown', (e) => {
+    if (e.key === 'F2') {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.repeat) return;
+      if (state.captureMode) finishCapture();
+      else startCapture();
+      return;
+    }
+
     if (state.captureMode) {
       handleCaptureKey(e);
       return;
@@ -1791,6 +1898,8 @@
       if (searchEl.value) {
         searchEl.value = '';
         state.query = '';
+        state.keyQuery = false;
+        state.captureKeys = [];
         state.selectedId = null;
         render(true);
       } else {
@@ -1800,6 +1909,15 @@
   });
 
   card.addEventListener('keydown', (e) => {
+    if (e.key === 'F2') {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.repeat) return;
+      if (state.captureMode) finishCapture();
+      else startCapture();
+      return;
+    }
+
     if (e.key === 'Escape' && e.target !== searchEl) {
       e.preventDefault();
       e.stopPropagation();
