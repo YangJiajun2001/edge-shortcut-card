@@ -1,5 +1,5 @@
 (() => {
-  const BUILD = '1.4.0';
+  const BUILD = '1.5.0';
   if (window.__ESC_CARD_OVERLAY__ === BUILD) return;
   if (window.__ESC_CARD_OVERLAY__) {
     // 扩展更新后，旧 content script 的上下文可能已经失效；清掉旧节点重新初始化
@@ -205,6 +205,36 @@
 
   const RECENT_MAX = 3;
   const EDIT_CONTEXT_IDS = ['edit-copy', 'edit-paste', 'edit-undo', 'edit-select-all'];
+  const TIP_INDEX_KEY = 'edgeShortcutTipIndex';
+  const TIP_CATALOG = [
+    'tab-reopen', 'win-private', 'paste-plain', 'web-capture',
+    'collections', 'tab-next', 'tab-jump', 'tab-last',
+    'tab-mute', 'tab-duplicate', 'win-guest', 'url-focus',
+    'nav-hard', 'pdf-fit', 'fav-open', 'hist-open',
+    'devtools', 'clear-data', 'zoom-reset', 'page-reader',
+  ];
+  const TIP_SHORT_TITLES = {
+    'tab-reopen': '重开标签',
+    'win-private': '隐私窗口',
+    'paste-plain': '纯文本粘贴',
+    'web-capture': '网页捕获',
+    'collections': '打开集锦',
+    'tab-next': '下个标签',
+    'tab-jump': '跳到标签',
+    'tab-last': '最后标签',
+    'tab-mute': '静音标签',
+    'tab-duplicate': '复制标签',
+    'win-guest': '来宾浏览',
+    'url-focus': '聚焦地址栏',
+    'nav-hard': '强制刷新',
+    'pdf-fit': 'PDF 适配',
+    'fav-open': '收藏夹',
+    'hist-open': '历史记录',
+    'devtools': '开发者工具',
+    'clear-data': '清除数据',
+    'zoom-reset': '恢复缩放',
+    'page-reader': '阅读模式',
+  };
 
   // ============ 状态 ============
   const state = {
@@ -219,7 +249,11 @@
     captureMode: false,
     captureKeys: [],
     keyQuery: false,
+    tipIndex: 0,
+    tipHasBeenShown: false,
   };
+
+  let pendingTipId = null;
 
   // 清掉旧版本可能残留的网页卡片
   document.querySelectorAll('[data-edge-shortcut-overlay], [data-edge-shortcut-card]').forEach((el) => el.remove());
@@ -610,11 +644,12 @@
         transform: translateY(-50%);
         display: flex;
         align-items: center;
-        gap: 7px;
-        height: 40px;
-        padding: 0 14px;
+        gap: 8px;
+        min-height: 48px;
+        max-width: 220px;
+        padding: 8px 11px;
         border: 0;
-        border-radius: 20px;
+        border-radius: 14px;
         background: var(--accent);
         box-shadow: var(--shadow);
         color: #fff;
@@ -622,6 +657,7 @@
         font-size: 12px;
         font-weight: 600;
         line-height: 1;
+        text-align: left;
         cursor: pointer;
         pointer-events: auto;
         user-select: none;
@@ -629,7 +665,32 @@
 
       .pill:hover { filter: brightness(1.08); }
       .pill:active { transform: translateY(-50%) scale(.98); }
-      .pill-icon { font-size: 14px; }
+      .pill-icon { flex: 0 0 auto; font-size: 12px; font-weight: 700; }
+      .pill-copy {
+        display: flex;
+        flex: 1 1 auto;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+      }
+      .pill-keys {
+        max-width: 160px;
+        overflow: hidden;
+        font-size: 11px;
+        font-weight: 700;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .pill-title {
+        max-width: 160px;
+        overflow: hidden;
+        opacity: .86;
+        font-size: 9px;
+        font-weight: 500;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .pill-chevron { flex: 0 0 auto; opacity: .75; font-size: 14px; }
 
       .toast {
         position: fixed;
@@ -661,7 +722,7 @@
     <div class="card" hidden>
       <div class="header" title="点击切换展开/收起，拖动移动">
         <div class="brand">
-          <span class="logo">⌨</span>
+          <span class="logo">K</span>
           <span class="brand-title">快捷键</span>
         </div>
         <button class="btn icon collapse" type="button" title="收起">−</button>
@@ -734,8 +795,12 @@
     </div>
 
     <button class="pill" type="button" hidden title="展开快捷键卡片">
-      <span class="pill-icon">⌨</span>
-      <span>快捷键</span>
+      <span class="pill-icon">K</span>
+      <span class="pill-copy">
+        <span class="pill-keys">Ctrl+Shift+T</span>
+        <span class="pill-title">重开标签</span>
+      </span>
+      <span class="pill-chevron">›</span>
     </button>
 
     <div class="toast" role="status" aria-live="polite"></div>
@@ -762,6 +827,8 @@
   const refreshBtn = root.querySelector('.refresh');
   const restoreBtn = root.querySelector('.restore');
   const pill = root.querySelector('.pill');
+  const pillKeys = root.querySelector('.pill-keys');
+  const pillTitle = root.querySelector('.pill-title');
   const toastEl = root.querySelector('.toast');
 
   // ============ 工具 ============
@@ -1269,6 +1336,34 @@
     chrome.storage.local.set({ [RECENT_KEY]: state.recent }).catch(() => {});
   }
 
+  function normalizeTipIndex(value) {
+    const index = Number(value);
+    if (!Number.isFinite(index)) return 0;
+    const length = TIP_CATALOG.length;
+    return ((Math.trunc(index) % length) + length) % length;
+  }
+
+  function currentTipId() {
+    return TIP_CATALOG[normalizeTipIndex(state.tipIndex)] || 'tab-reopen';
+  }
+
+  function renderPill() {
+    const id = currentTipId();
+    const item = SHORTCUT_BY_ID.get(id);
+    if (!item) return;
+
+    pillKeys.textContent = formatKeyCombo(item.keys[0]);
+    pillTitle.textContent = TIP_SHORT_TITLES[id] || item.title;
+    pill.title = `${item.title} · 点击查看`;
+    pill.setAttribute('aria-label', `快捷键提示：${item.title}，点击查看`);
+  }
+
+  function advanceTip() {
+    state.tipIndex = (normalizeTipIndex(state.tipIndex) + 1) % TIP_CATALOG.length;
+    renderPill();
+    chrome.storage.local.set({ [TIP_INDEX_KEY]: state.tipIndex }).catch(() => {});
+  }
+
   function isEditableElement(el) {
     if (!el || el.nodeType !== 1) return false;
 
@@ -1555,6 +1650,7 @@
     updateChromeVisibility();
 
     if (next === 'collapsed') {
+      state.tipHasBeenShown = true;
       hideToast();
       applyCollapsedGeometry();
       if (focus) {
@@ -1570,8 +1666,17 @@
   }
 
   function setMode(mode, opts = {}) {
-    applyMode(mode, opts);
-    chrome.storage.local.set({ [MODE_KEY]: validMode(mode) }).catch(() => {});
+    const next = validMode(mode);
+    if (next === 'collapsed' && state.mode === 'expanded') {
+      if (state.tipHasBeenShown) {
+        advanceTip();
+      } else {
+        state.tipHasBeenShown = true;
+        renderPill();
+      }
+    }
+    applyMode(next, opts);
+    chrome.storage.local.set({ [MODE_KEY]: next }).catch(() => {});
   }
 
   function cycleMode(opts = {}) {
@@ -1989,7 +2094,21 @@
       suppressPillClick = false;
       return;
     }
+
+    const tipId = currentTipId();
+    pendingTipId = tipId;
+    state.query = '';
+    state.keyQuery = false;
+    state.captureKeys = [];
+    state.selectedId = tipId;
+    searchEl.value = '';
     setMode('expanded', { focus: true });
+
+    requestAnimationFrame(() => {
+      if (state.mode !== 'expanded' || pendingTipId !== tipId) return;
+      pendingTipId = null;
+      jumpToShortcut(tipId);
+    });
   });
 
   pill.addEventListener('mouseup', (e) => e.stopPropagation());
@@ -2042,6 +2161,11 @@
       state.recent = normalizeRecent(changes[RECENT_KEY].newValue);
       renderRecent();
     }
+
+    if (changes[TIP_INDEX_KEY]) {
+      state.tipIndex = normalizeTipIndex(changes[TIP_INDEX_KEY].newValue);
+      renderPill();
+    }
   });
 
   // ============ 初始化 ============
@@ -2052,7 +2176,7 @@
     const startRecentVersion = recentVersion;
     let stored = {};
     try {
-      stored = await chrome.storage.local.get([MODE_KEY, GEOMETRY_KEY, SORT_KEY, RECENT_KEY]);
+      stored = await chrome.storage.local.get([MODE_KEY, GEOMETRY_KEY, SORT_KEY, RECENT_KEY, TIP_INDEX_KEY]);
     } catch (e) {
       // 忽略
     }
@@ -2066,11 +2190,13 @@
     if (recentVersion === startRecentVersion) {
       state.recent = normalizeRecent(stored[RECENT_KEY]);
     }
+    state.tipIndex = normalizeTipIndex(stored[TIP_INDEX_KEY]);
     if (isEditableElement(document.activeElement)) {
       state.lastEditable = document.activeElement;
     }
     updateSortLabel();
     renderRecent();
+    renderPill();
     updateContextBar();
 
     const epoch = dataEpoch;

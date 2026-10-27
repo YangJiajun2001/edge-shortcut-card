@@ -41,6 +41,21 @@ chrome.action.onClicked.addListener(async (tab) => {
   }
 });
 
+// 新安装默认显示收起胶囊；更新已有用户不强制改形态。
+chrome.runtime.onInstalled.addListener(async (details) => {
+  if (details.reason !== 'install') return;
+
+  try {
+    const key = 'edgeShortcutCardMode';
+    const data = await chrome.storage.local.get(key);
+    if (!data[key]) {
+      await chrome.storage.local.set({ [key]: 'collapsed' });
+    }
+  } catch (e) {
+    // 忽略
+  }
+});
+
 // ==================== 搜索次数 ====================
 // 所有写入都走同一条队列，避免多个标签页同时修改时互相覆盖。
 const SEARCH_STATS_KEY = 'edgeShortcutSearchStats';
