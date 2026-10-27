@@ -1,5 +1,5 @@
 (() => {
-  const BUILD = '1.5.0';
+  const BUILD = '1.6.0';
   if (window.__ESC_CARD_OVERLAY__ === BUILD) return;
   if (window.__ESC_CARD_OVERLAY__) {
     // 扩展更新后，旧 content script 的上下文可能已经失效；清掉旧节点重新初始化
@@ -206,13 +206,6 @@
   const RECENT_MAX = 3;
   const EDIT_CONTEXT_IDS = ['edit-copy', 'edit-paste', 'edit-undo', 'edit-select-all'];
   const TIP_INDEX_KEY = 'edgeShortcutTipIndex';
-  const TIP_CATALOG = [
-    'tab-reopen', 'win-private', 'paste-plain', 'web-capture',
-    'collections', 'tab-next', 'tab-jump', 'tab-last',
-    'tab-mute', 'tab-duplicate', 'win-guest', 'url-focus',
-    'nav-hard', 'pdf-fit', 'fav-open', 'hist-open',
-    'devtools', 'clear-data', 'zoom-reset', 'page-reader',
-  ];
   const TIP_SHORT_TITLES = {
     'tab-reopen': '重开标签',
     'win-private': '隐私窗口',
@@ -1339,12 +1332,18 @@
   function normalizeTipIndex(value) {
     const index = Number(value);
     if (!Number.isFinite(index)) return 0;
-    const length = TIP_CATALOG.length;
+    const length = SHORTCUTS.length;
     return ((Math.trunc(index) % length) + length) % length;
   }
 
   function currentTipId() {
-    return TIP_CATALOG[normalizeTipIndex(state.tipIndex)] || 'tab-reopen';
+    return SHORTCUTS[normalizeTipIndex(state.tipIndex)]?.id || 'tab-reopen';
+  }
+
+  function shortTitleFor(item) {
+    const mapped = TIP_SHORT_TITLES[item.id];
+    if (mapped) return mapped;
+    return item.title.length > 10 ? `${item.title.slice(0, 9)}…` : item.title;
   }
 
   function renderPill() {
@@ -1353,13 +1352,21 @@
     if (!item) return;
 
     pillKeys.textContent = formatKeyCombo(item.keys[0]);
-    pillTitle.textContent = TIP_SHORT_TITLES[id] || item.title;
+    pillTitle.textContent = shortTitleFor(item);
     pill.title = `${item.title} · 点击查看`;
     pill.setAttribute('aria-label', `快捷键提示：${item.title}，点击查看`);
   }
 
   function advanceTip() {
-    state.tipIndex = (normalizeTipIndex(state.tipIndex) + 1) % TIP_CATALOG.length;
+    const length = SHORTCUTS.length;
+    const current = normalizeTipIndex(state.tipIndex);
+    let next = current;
+    if (length > 1) {
+      while (next === current) {
+        next = Math.floor(Math.random() * length);
+      }
+    }
+    state.tipIndex = next;
     renderPill();
     chrome.storage.local.set({ [TIP_INDEX_KEY]: state.tipIndex }).catch(() => {});
   }
@@ -1679,13 +1686,31 @@
     chrome.storage.local.set({ [MODE_KEY]: next }).catch(() => {});
   }
 
-  function cycleMode(opts = {}) {
-    let next;
-    if (state.mode === 'hidden') next = 'expanded';
-    else if (state.mode === 'expanded') next = 'collapsed';
-    else next = 'expanded';
+  function openCardWithTip() {
+    const tipId = currentTipId();
+    pendingTipId = tipId;
+    state.tipHasBeenShown = true;
+    state.query = '';
+    state.keyQuery = false;
+    state.captureKeys = [];
+    state.selectedId = tipId;
+    searchEl.value = '';
+    setMode('expanded', { focus: true });
 
-    setMode(next, { focus: opts.focus !== false });
+    requestAnimationFrame(() => {
+      if (state.mode !== 'expanded' || pendingTipId !== tipId) return;
+      pendingTipId = null;
+      jumpToShortcut(tipId);
+    });
+  }
+
+  function cycleMode(opts = {}) {
+    if (state.mode === 'expanded') {
+      setMode('collapsed', { focus: opts.focus !== false });
+      return;
+    }
+
+    openCardWithTip();
   }
 
   // ============ 搜索计数 ============
@@ -2095,20 +2120,7 @@
       return;
     }
 
-    const tipId = currentTipId();
-    pendingTipId = tipId;
-    state.query = '';
-    state.keyQuery = false;
-    state.captureKeys = [];
-    state.selectedId = tipId;
-    searchEl.value = '';
-    setMode('expanded', { focus: true });
-
-    requestAnimationFrame(() => {
-      if (state.mode !== 'expanded' || pendingTipId !== tipId) return;
-      pendingTipId = null;
-      jumpToShortcut(tipId);
-    });
+    openCardWithTip();
   });
 
   pill.addEventListener('mouseup', (e) => e.stopPropagation());
@@ -2190,7 +2202,12 @@
     if (recentVersion === startRecentVersion) {
       state.recent = normalizeRecent(stored[RECENT_KEY]);
     }
-    state.tipIndex = normalizeTipIndex(stored[TIP_INDEX_KEY]);
+    if (stored[TIP_INDEX_KEY] === undefined || stored[TIP_INDEX_KEY] === null) {
+      state.tipIndex = Math.floor(Math.random() * SHORTCUTS.length);
+      chrome.storage.local.set({ [TIP_INDEX_KEY]: state.tipIndex }).catch(() => {});
+    } else {
+      state.tipIndex = normalizeTipIndex(stored[TIP_INDEX_KEY]);
+    }
     if (isEditableElement(document.activeElement)) {
       state.lastEditable = document.activeElement;
     }
