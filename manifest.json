@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Edge 快捷键卡片",
-  "version": "1.6.0",
-  "description": "页面内可收起/展开的 Edge 快捷键卡片：每次收起随机显示一条快捷键提示，支持模糊搜索、F2 逐键录入和最近搜索。",
+  "version": "1.7.0",
+  "description": "页面内可收起/展开的 Edge 快捷键卡片：个性化快捷键提示、收起态 F8 记录已试、模糊搜索、F2 逐键录入和最近搜索。",
   "icons": {
     "16": "icons/icon16.png",
     "32": "icons/icon32.png",

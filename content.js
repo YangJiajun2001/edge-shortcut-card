@@ -1,5 +1,5 @@
 (() => {
-  const BUILD = '1.6.0';
+  const BUILD = '1.7.0';
   if (window.__ESC_CARD_OVERLAY__ === BUILD) return;
   if (window.__ESC_CARD_OVERLAY__) {
     // 扩展更新后，旧 content script 的上下文可能已经失效；清掉旧节点重新初始化
@@ -206,6 +206,8 @@
   const RECENT_MAX = 3;
   const EDIT_CONTEXT_IDS = ['edit-copy', 'edit-paste', 'edit-undo', 'edit-select-all'];
   const TIP_INDEX_KEY = 'edgeShortcutTipIndex';
+  const TIP_CONFIRMED_KEY = 'edgeShortcutTipConfirmed';
+  const TIP_HISTORY_KEY = 'edgeShortcutTipHistory';
   const TIP_SHORT_TITLES = {
     'tab-reopen': '重开标签',
     'win-private': '隐私窗口',
@@ -244,6 +246,8 @@
     keyQuery: false,
     tipIndex: 0,
     tipHasBeenShown: false,
+    confirmedTips: [],
+    tipHistory: [],
   };
 
   let pendingTipId = null;
@@ -1237,8 +1241,8 @@
 
   let toastTimer = null;
 
-  function showToast(message) {
-    if (state.mode !== 'expanded') return;
+  function showToast(message, options = {}) {
+    if (state.mode !== 'expanded' && !options.allowCollapsed) return;
     toastEl.textContent = message;
     toastEl.classList.add('show');
     clearTimeout(toastTimer);
@@ -1353,22 +1357,95 @@
 
     pillKeys.textContent = formatKeyCombo(item.keys[0]);
     pillTitle.textContent = shortTitleFor(item);
-    pill.title = `${item.title} · 点击查看`;
-    pill.setAttribute('aria-label', `快捷键提示：${item.title}，点击查看`);
+    pill.title = `${item.title} · F8 记下已试 · 点击查看`;
+    pill.setAttribute('aria-label', `快捷键提示：${item.title}，按 F8 记下已试，点击查看`);
+  }
+
+  function normalizeTipIds(value, limit = Infinity) {
+    if (!Array.isArray(value)) return [];
+
+    const result = [];
+    for (const id of value) {
+      if (typeof id === 'string' && SHORTCUT_BY_ID.has(id) && !result.includes(id)) {
+        result.push(id);
+      }
+      if (result.length >= limit) break;
+    }
+    return result;
+  }
+
+  function rememberTip(id) {
+    if (!id || state.tipHistory[0] === id) return;
+
+    state.tipHistory = [id, ...state.tipHistory.filter((item) => item !== id)].slice(0, 20);
+    chrome.storage.local.set({ [TIP_HISTORY_KEY]: state.tipHistory }).catch(() => {});
+  }
+
+  function pickNextTipIndex() {
+    const current = normalizeTipIndex(state.tipIndex);
+    const currentId = SHORTCUTS[current]?.id;
+    const historySet = new Set(state.tipHistory.slice(0, 10));
+    const confirmedSet = new Set(state.confirmedTips);
+    const categoryCounts = {};
+    const recentCategories = new Set();
+
+    for (const [id, rawCount] of Object.entries(state.stats)) {
+      const item = SHORTCUT_BY_ID.get(id);
+      if (!item) continue;
+      categoryCounts[item.cat] = (categoryCounts[item.cat] || 0) + (Number(rawCount) || 0);
+    }
+    for (const id of state.recent) {
+      const item = SHORTCUT_BY_ID.get(id);
+      if (item) recentCategories.add(item.cat);
+    }
+
+    const candidates = SHORTCUTS
+      .map((item, index) => ({ item, index }))
+      .filter(({ item }) => item.id !== currentId)
+      .map(({ item, index }) => {
+        let score = Math.random() * 2;
+
+        if (!historySet.has(item.id)) score += 8;
+        if (!confirmedSet.has(item.id)) score += 14;
+        score += Math.min(categoryCounts[item.cat] || 0, 5) * 2;
+        if (recentCategories.has(item.cat)) score += 10;
+        if ((state.stats[item.id] || 0) === 0) score += 2;
+
+        return { index, score };
+      })
+      .sort((a, b) => b.score - a.score);
+
+    return candidates[0]?.index ?? current;
   }
 
   function advanceTip() {
-    const length = SHORTCUTS.length;
-    const current = normalizeTipIndex(state.tipIndex);
-    let next = current;
-    if (length > 1) {
-      while (next === current) {
-        next = Math.floor(Math.random() * length);
-      }
-    }
-    state.tipIndex = next;
+    state.tipIndex = pickNextTipIndex();
     renderPill();
+    rememberTip(currentTipId());
     chrome.storage.local.set({ [TIP_INDEX_KEY]: state.tipIndex }).catch(() => {});
+  }
+
+  function confirmCurrentTip() {
+    const id = currentTipId();
+    const item = SHORTCUT_BY_ID.get(id);
+    if (!item) return;
+
+    state.confirmedTips = [id, ...state.confirmedTips.filter((tipId) => tipId !== id)];
+    rememberTip(id);
+    chrome.storage.local.set({ [TIP_CONFIRMED_KEY]: state.confirmedTips }).catch(() => {});
+    advanceTip();
+    showToast(`已记下：${formatKeyCombo(item.keys[0])} · 换下一条`, { allowCollapsed: true });
+  }
+
+  function handleGlobalKeydown(event) {
+    if (state.mode !== 'collapsed' || event.key !== 'F8') return;
+    if (event.repeat || event.isComposing) return;
+    if (event.ctrlKey || event.altKey || event.shiftKey || event.metaKey) return;
+    if (isEditableElement(document.activeElement)) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    confirmCurrentTip();
   }
 
   function isEditableElement(el) {
@@ -1658,6 +1735,7 @@
 
     if (next === 'collapsed') {
       state.tipHasBeenShown = true;
+      rememberTip(currentTipId());
       hideToast();
       applyCollapsedGeometry();
       if (focus) {
@@ -1690,6 +1768,7 @@
     const tipId = currentTipId();
     pendingTipId = tipId;
     state.tipHasBeenShown = true;
+    rememberTip(tipId);
     state.query = '';
     state.keyQuery = false;
     state.captureKeys = [];
@@ -1791,6 +1870,8 @@
       state.selectedId = null;
       state.keyQuery = false;
       state.captureKeys = [];
+      state.confirmedTips = [];
+      state.tipHistory = [];
       recentVersion += 1;
       sortVersion += 1;
       lastRecordAt = 0;
@@ -1798,6 +1879,8 @@
       updateSortLabel();
       chrome.storage.local.set({ [SORT_KEY]: state.sortBy }).catch(() => {});
       chrome.storage.local.set({ [RECENT_KEY]: [] }).catch(() => {});
+      chrome.storage.local.set({ [TIP_CONFIRMED_KEY]: [] }).catch(() => {});
+      chrome.storage.local.set({ [TIP_HISTORY_KEY]: [] }).catch(() => {});
       renderRecent();
 
       if (state.captureMode) resetCaptureState();
@@ -2112,6 +2195,7 @@
   });
 
   document.addEventListener('focusin', handlePageFocus, true);
+  document.addEventListener('keydown', handleGlobalKeydown, true);
 
   pill.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -2178,6 +2262,14 @@
       state.tipIndex = normalizeTipIndex(changes[TIP_INDEX_KEY].newValue);
       renderPill();
     }
+
+    if (changes[TIP_CONFIRMED_KEY]) {
+      state.confirmedTips = normalizeTipIds(changes[TIP_CONFIRMED_KEY].newValue, SHORTCUTS.length);
+    }
+
+    if (changes[TIP_HISTORY_KEY]) {
+      state.tipHistory = normalizeTipIds(changes[TIP_HISTORY_KEY].newValue, 20);
+    }
   });
 
   // ============ 初始化 ============
@@ -2188,7 +2280,10 @@
     const startRecentVersion = recentVersion;
     let stored = {};
     try {
-      stored = await chrome.storage.local.get([MODE_KEY, GEOMETRY_KEY, SORT_KEY, RECENT_KEY, TIP_INDEX_KEY]);
+      stored = await chrome.storage.local.get([
+        MODE_KEY, GEOMETRY_KEY, SORT_KEY, RECENT_KEY,
+        TIP_INDEX_KEY, TIP_CONFIRMED_KEY, TIP_HISTORY_KEY,
+      ]);
     } catch (e) {
       // 忽略
     }
@@ -2202,6 +2297,8 @@
     if (recentVersion === startRecentVersion) {
       state.recent = normalizeRecent(stored[RECENT_KEY]);
     }
+    state.confirmedTips = normalizeTipIds(stored[TIP_CONFIRMED_KEY], SHORTCUTS.length);
+    state.tipHistory = normalizeTipIds(stored[TIP_HISTORY_KEY], 20);
     if (stored[TIP_INDEX_KEY] === undefined || stored[TIP_INDEX_KEY] === null) {
       state.tipIndex = Math.floor(Math.random() * SHORTCUTS.length);
       chrome.storage.local.set({ [TIP_INDEX_KEY]: state.tipIndex }).catch(() => {});
