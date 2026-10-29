@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Edge 快捷键卡片",
-  "version": "1.9.0",
-  "description": "页面内可收起/展开的 Edge 快捷键卡片：场景化提示、收起态 F8 记录已试、Alt+O 打开官方说明、模糊搜索和 F2 逐键录入。",
+  "version": "1.10.0",
+  "description": "页面内可收起/展开的 Edge 快捷键卡片：场景化提示、收起态 F8 键帽记录已试、Alt+O 打开官方说明、模糊搜索和 F2 逐键录入。",
   "icons": {
     "16": "icons/icon16.png",
     "32": "icons/icon32.png",

@@ -43,6 +43,7 @@ Edge 官方快捷键页是主要数据来源。早期版本曾采用独立窗口
 
 - 新安装默认进入收起态；
 - 胶囊显示一条快捷键：组合键 + 短标题；
+- 胶囊右侧有 `F8` 小键帽，提醒可以按 `F8` 记下已试；
 - 每次从展开态收起，按个性化评分换一条；
 - 点击胶囊或按 `Alt+Shift+K` 打开时，直接选中并定位到这条提示；
 - 收起态按 `F8`，可以“记下已试”，不打开卡片，直接换下一条。
@@ -135,6 +136,7 @@ background.js       工具栏动作、搜索次数队列、消息处理
 content.js          页面内卡片、搜索、键盘、提示逻辑
 icons/              工具栏图标
 design/             设计稿和说明
+CONTRIBUTING.md     命名、提交和版本约定
 README.md           本文件
 ```
 
@@ -147,6 +149,8 @@ README.md           本文件
 - **提示持久化**：`edgeShortcutTipIndex`、`edgeShortcutTipConfirmed`、`edgeShortcutTipHistory`；
 - **键盘边界**：`F8` 只在收起态、页面有焦点、焦点不在输入框时生效；
 - **测试**：`node --check` + 无头 Edge 合成键盘 / 鼠标事件验证交互。
+
+命名、提交和版本规则见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
 ### 运行
 
@@ -169,5 +173,5 @@ README.md           本文件
 
 ### 版本
 
-当前版本：**v1.9.0**。
+当前版本：**v1.10.0**。
 版本记录以 Git tag 和 GitHub Releases 为准，完整历史见仓库。

@@ -1,5 +1,5 @@
 (() => {
-  const BUILD = '1.9.0';
+  const BUILD = '1.10.0';
   if (window.__ESC_CARD_OVERLAY__ === BUILD) return;
   if (window.__ESC_CARD_OVERLAY__) {
     // 扩展更新后，旧 content script 的上下文可能已经失效；清掉旧节点重新初始化
@@ -708,7 +708,24 @@
         text-overflow: ellipsis;
         white-space: nowrap;
       }
-      .pill-chevron { flex: 0 0 auto; opacity: .75; font-size: 14px; }
+      .pill-f8 {
+        display: inline-flex;
+        flex: 0 0 auto;
+        align-items: center;
+        justify-content: center;
+        min-width: 23px;
+        height: 20px;
+        padding: 0 5px;
+        border: 1px solid rgba(255, 255, 255, .55);
+        border-radius: 5px;
+        background: rgba(255, 255, 255, .14);
+        color: #fff;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 8.5px;
+        font-weight: 700;
+        line-height: 1;
+        letter-spacing: .02em;
+      }
 
       .toast {
         position: fixed;
@@ -818,7 +835,7 @@
         <span class="pill-keys">Ctrl+Shift+T</span>
         <span class="pill-title">重开标签</span>
       </span>
-      <span class="pill-chevron">›</span>
+      <span class="pill-f8" title="按 F8 记下已试" aria-hidden="true">F8</span>
     </button>
 
     <div class="toast" role="status" aria-live="polite"></div>
