@@ -1,5 +1,5 @@
 (() => {
-  const BUILD = '1.7.0';
+  const BUILD = '1.8.0';
   if (window.__ESC_CARD_OVERLAY__ === BUILD) return;
   if (window.__ESC_CARD_OVERLAY__) {
     // 扩展更新后，旧 content script 的上下文可能已经失效；清掉旧节点重新初始化
@@ -205,6 +205,7 @@
 
   const RECENT_MAX = 3;
   const EDIT_CONTEXT_IDS = ['edit-copy', 'edit-paste', 'edit-undo', 'edit-select-all'];
+  const OFFICIAL_SHORTCUTS_URL = 'https://support.microsoft.com/zh-cn/edge/keyboard-shortcuts-in-microsoft-edge';
   const TIP_INDEX_KEY = 'edgeShortcutTipIndex';
   const TIP_CONFIRMED_KEY = 'edgeShortcutTipConfirmed';
   const TIP_HISTORY_KEY = 'edgeShortcutTipHistory';
@@ -589,6 +590,26 @@
         text-overflow: ellipsis;
         white-space: nowrap;
       }
+
+      .official-link {
+        flex: 0 0 auto;
+        margin-left: auto;
+        color: var(--accent);
+        font-size: 9px;
+        font-weight: 600;
+        text-decoration: none;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .item:hover .official-link,
+      .item.selected .official-link,
+      .official-link:focus {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .official-link:hover { text-decoration: underline; }
 
       .count {
         flex: 0 0 auto;
@@ -1119,6 +1140,9 @@
       const altText = s.keys.slice(1).map((combo) => combo.map(displayKeyToken).join(' ')).join(' / ');
       const catText = altText ? `${s.cat} · 备选 ${altText}` : s.cat;
       const selected = s.id === state.selectedId ? ' selected' : '';
+      const official = s.cat === '编辑'
+        ? ''
+        : `<a class="official-link" href="${officialLinkFor(s)}" target="_blank" rel="noopener noreferrer" title="打开 Microsoft 官方说明（尝试定位到该快捷键）">官方</a>`;
 
       html += `
         <div class="item${selected}" data-id="${s.id}" title="${escapeHtml(s.title)} · ${escapeHtml(catText)}">
@@ -1127,6 +1151,7 @@
             <div class="title">${escapeHtml(s.title)}</div>
             <div class="cat">${escapeHtml(catText)}</div>
           </div>
+          ${official}
           ${count > 0 ? `<div class="count" title="搜索次数">${count}</div>` : ''}
         </div>`;
     }
@@ -1350,15 +1375,69 @@
     return item.title.length > 10 ? `${item.title.slice(0, 9)}…` : item.title;
   }
 
+  function officialLinkFor(item) {
+    const keyText = item.keys[0].join('+');
+    return `${OFFICIAL_SHORTCUTS_URL}#:~:text=${encodeURIComponent(keyText)}`;
+  }
+
+  function detectPageContext() {
+    const active = document.activeElement;
+    const editable = isEditableElement(active)
+      ? active
+      : (state.lastEditable && state.lastEditable.isConnected ? state.lastEditable : null);
+
+    if (editable) {
+      return {
+        label: '当前在输入框',
+        ids: new Set(EDIT_CONTEXT_IDS),
+        cats: new Set(['编辑']),
+      };
+    }
+
+    if (/\.pdf(?:$|[?#])/i.test(location.href) || document.contentType === 'application/pdf') {
+      return {
+        label: '当前是 PDF',
+        ids: new Set(['pdf-fit', 'pdf-rotate-left', 'pdf-rotate-right']),
+        cats: new Set(['缩放与 PDF']),
+      };
+    }
+
+    if (document.querySelector('video, audio')) {
+      return {
+        label: '当前有视频/音频',
+        ids: new Set(['tab-mute', 'read-aloud']),
+        cats: new Set(['标签页']),
+      };
+    }
+
+    if (document.querySelector('pre code')) {
+      return {
+        label: '当前是代码页面',
+        ids: new Set(['devtools', 'console', 'inspect']),
+        cats: new Set(['开发者与阅读']),
+      };
+    }
+
+    return { label: '', ids: new Set(), cats: new Set() };
+  }
+
+  function contextReasonFor(item) {
+    const context = detectPageContext();
+    if (!context.label) return '';
+    if (context.ids.has(item.id) || context.cats.has(item.cat)) return context.label;
+    return '';
+  }
+
   function renderPill() {
     const id = currentTipId();
     const item = SHORTCUT_BY_ID.get(id);
     if (!item) return;
 
+    const reason = contextReasonFor(item);
     pillKeys.textContent = formatKeyCombo(item.keys[0]);
     pillTitle.textContent = shortTitleFor(item);
-    pill.title = `${item.title} · F8 记下已试 · 点击查看`;
-    pill.setAttribute('aria-label', `快捷键提示：${item.title}，按 F8 记下已试，点击查看`);
+    pill.title = `${item.title}${reason ? ` · ${reason}` : ''} · F8 记下已试 · 点击查看`;
+    pill.setAttribute('aria-label', `快捷键提示：${item.title}${reason ? `，${reason}` : ''}，按 F8 记下已试，点击查看`);
   }
 
   function normalizeTipIds(value, limit = Infinity) {
@@ -1388,6 +1467,7 @@
     const confirmedSet = new Set(state.confirmedTips);
     const categoryCounts = {};
     const recentCategories = new Set();
+    const context = detectPageContext();
 
     for (const [id, rawCount] of Object.entries(state.stats)) {
       const item = SHORTCUT_BY_ID.get(id);
@@ -1405,6 +1485,8 @@
       .map(({ item, index }) => {
         let score = Math.random() * 2;
 
+        if (context.ids.has(item.id)) score += 24;
+        else if (context.cats.has(item.cat)) score += 12;
         if (!historySet.has(item.id)) score += 8;
         if (!confirmedSet.has(item.id)) score += 14;
         score += Math.min(categoryCounts[item.cat] || 0, 5) * 2;
@@ -1753,12 +1835,8 @@
   function setMode(mode, opts = {}) {
     const next = validMode(mode);
     if (next === 'collapsed' && state.mode === 'expanded') {
-      if (state.tipHasBeenShown) {
-        advanceTip();
-      } else {
-        state.tipHasBeenShown = true;
-        renderPill();
-      }
+      advanceTip();
+      state.tipHasBeenShown = true;
     }
     applyMode(next, opts);
     chrome.storage.local.set({ [MODE_KEY]: next }).catch(() => {});
@@ -2185,6 +2263,11 @@
   restoreBtn.addEventListener('click', restoreStats);
 
   listEl.addEventListener('click', (e) => {
+    if (e.target.closest('.official-link')) {
+      e.stopPropagation();
+      return;
+    }
+
     const item = e.target.closest('.item');
     if (item) {
       const previousId = state.selectedId;
