@@ -1,5 +1,5 @@
 (() => {
-  const BUILD = '1.8.0';
+  const BUILD = '1.9.0';
   if (window.__ESC_CARD_OVERLAY__ === BUILD) return;
   if (window.__ESC_CARD_OVERLAY__) {
     // 扩展更新后，旧 content script 的上下文可能已经失效；清掉旧节点重新初始化
@@ -1142,7 +1142,7 @@
       const selected = s.id === state.selectedId ? ' selected' : '';
       const official = s.cat === '编辑'
         ? ''
-        : `<a class="official-link" href="${officialLinkFor(s)}" target="_blank" rel="noopener noreferrer" title="打开 Microsoft 官方说明（尝试定位到该快捷键）">官方</a>`;
+        : `<a class="official-link" href="${officialLinkFor(s)}" target="_blank" rel="noopener noreferrer" title="打开 Microsoft 官方说明（Alt+O；尝试定位到该快捷键）">官方</a>`;
 
       html += `
         <div class="item${selected}" data-id="${s.id}" title="${escapeHtml(s.title)} · ${escapeHtml(catText)}">
@@ -1312,7 +1312,7 @@
       footerActions.hidden = true;
     } else {
       hintMain.textContent = '↑↓ 选择 · Enter 记录选中项';
-      hintSub.textContent = 'F2 按键录入 · 空查询不计数';
+      hintSub.textContent = 'F2 按键录入 · Alt+O 官方';
       footerActions.hidden = false;
     }
   }
@@ -1378,6 +1378,27 @@
   function officialLinkFor(item) {
     const keyText = item.keys[0].join('+');
     return `${OFFICIAL_SHORTCUTS_URL}#:~:text=${encodeURIComponent(keyText)}`;
+  }
+
+  function openOfficialForSelected() {
+    const items = getVisibleList();
+    const item = items.find((entry) => entry.id === state.selectedId) || items[0];
+    if (!item) {
+      showToast('没有可查看的条目');
+      return;
+    }
+    if (item.cat === '编辑') {
+      showToast('编辑类没有官方说明');
+      return;
+    }
+
+    const link = listEl.querySelector('.item.selected .official-link');
+    if (link) {
+      link.click();
+      return;
+    }
+
+    window.open(officialLinkFor(item), '_blank', 'noopener,noreferrer');
   }
 
   function detectPageContext() {
@@ -2206,6 +2227,14 @@
       if (e.repeat) return;
       if (state.captureMode) finishCapture();
       else startCapture();
+      return;
+    }
+
+    if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && e.key.toLowerCase() === 'o') {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.repeat) return;
+      openOfficialForSelected();
       return;
     }
 
