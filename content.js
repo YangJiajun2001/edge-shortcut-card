@@ -1,5 +1,5 @@
 (() => {
-  const BUILD = '1.10.0';
+  const BUILD = '1.11.0';
   if (window.__ESC_CARD_OVERLAY__ === BUILD) return;
   if (window.__ESC_CARD_OVERLAY__) {
     // 扩展更新后，旧 content script 的上下文可能已经失效；清掉旧节点重新初始化
@@ -405,7 +405,17 @@
       .search[readonly] { cursor: default; }
 
       .sort { height: 30px; font-size: 11px; }
-      .capture { width: 30px; padding: 0; font-size: 13px; }
+      .capture {
+        width: 30px;
+        padding: 0;
+        border-color: var(--border);
+        background: var(--bg);
+        color: var(--accent);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 9px;
+        font-weight: 700;
+      }
+      .capture:hover { background: var(--hover); }
       .capture.active { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
       .card.capturing .sort { display: none; }
 
@@ -592,11 +602,17 @@
       }
 
       .official-link {
+        display: inline-flex;
         flex: 0 0 auto;
+        align-items: center;
+        justify-content: center;
+        min-width: 16px;
         margin-left: auto;
+        padding: 0 2px;
         color: var(--accent);
-        font-size: 9px;
-        font-weight: 600;
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1;
         text-decoration: none;
         opacity: 0;
         pointer-events: none;
@@ -609,7 +625,7 @@
         pointer-events: auto;
       }
 
-      .official-link:hover { text-decoration: underline; }
+      .official-link:hover { filter: brightness(.9); }
 
       .count {
         flex: 0 0 auto;
@@ -654,6 +670,7 @@
 
       .actions { display: flex; flex: 0 0 auto; gap: 5px; }
       .actions[hidden] { display: none !important; }
+      .restore { color: var(--fg-muted); }
 
       .pill {
         position: fixed;
@@ -766,7 +783,7 @@
 
       <div class="search-row">
         <input class="search" type="text" placeholder="搜索快捷键 / 功能…" spellcheck="false" autocomplete="off" />
-        <button class="btn capture" type="button" title="按组合查（逐键录入，F2）">⌨</button>
+        <button class="btn capture" type="button" title="按组合查（逐键录入，F2）">F2</button>
         <button class="btn sort" type="button" title="切换排序方式">频率</button>
       </div>
 
@@ -1159,7 +1176,7 @@
       const selected = s.id === state.selectedId ? ' selected' : '';
       const official = s.cat === '编辑'
         ? ''
-        : `<a class="official-link" href="${officialLinkFor(s)}" target="_blank" rel="noopener noreferrer" title="打开 Microsoft 官方说明（Alt+O；尝试定位到该快捷键）">官方</a>`;
+        : `<a class="official-link" href="${officialLinkFor(s)}" target="_blank" rel="noopener noreferrer" aria-label="打开 Microsoft 官方说明" title="打开 Microsoft 官方说明（Alt+O；尝试定位到该快捷键）">↗</a>`;
 
       html += `
         <div class="item${selected}" data-id="${s.id}" title="${escapeHtml(s.title)} · ${escapeHtml(catText)}">
@@ -1328,8 +1345,8 @@
       hintSub.textContent = 'F2 也可完成 · Esc 退出录入';
       footerActions.hidden = true;
     } else {
-      hintMain.textContent = '↑↓ 选择 · Enter 记录选中项';
-      hintSub.textContent = 'F2 按键录入 · Alt+O 官方';
+      hintMain.textContent = '↑↓ 选择 · Enter 记录';
+      hintSub.textContent = 'F2 录入 · Alt+O 官方';
       footerActions.hidden = false;
     }
   }

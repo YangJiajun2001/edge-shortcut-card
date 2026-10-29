@@ -1,0 +1,325 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1680" height="1050" viewBox="0 0 1680 1050">
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#0f172a" flood-opacity="0.14"/>
+    </filter>
+    <style>
+      text { font-family: "Microsoft YaHei", "Segoe UI", system-ui, sans-serif; }
+      .title { font-size: 28px; font-weight: 700; fill: #111827; }
+      .subtitle { font-size: 14px; fill: #64748b; }
+      .panel-title { font-size: 17px; font-weight: 700; fill: #0f172a; }
+      .panel-sub { font-size: 10.5px; fill: #64748b; }
+      .card-title { font-size: 12.5px; font-weight: 700; fill: #1f2328; }
+      .search { font-size: 10px; fill: #94a3b8; }
+      .btn { font-size: 9px; font-weight: 600; fill: #475569; }
+      .kbd { font-size: 9px; font-weight: 600; fill: #334155; font-family: ui-monospace, Consolas, monospace; }
+      .item { font-size: 10.5px; font-weight: 600; fill: #1e293b; }
+      .item-small { font-size: 8.5px; fill: #94a3b8; }
+      .count { font-size: 9px; font-weight: 700; fill: #0b7dda; }
+      .hint { font-size: 8.5px; fill: #64748b; }
+      .tiny { font-size: 7.5px; fill: #94a3b8; }
+      .anno { font-size: 10.5px; fill: #475569; }
+      .anno-blue { font-size: 10.5px; fill: #0b7dda; }
+      .bottom { font-size: 12px; fill: #e2e8f0; }
+      .dark-title { font-size: 12.5px; font-weight: 700; fill: #f1f3f5; }
+      .dark-search { font-size: 10px; fill: #9aa0a6; }
+      .dark-item { font-size: 10.5px; font-weight: 600; fill: #f1f3f5; }
+      .dark-small { font-size: 8.5px; fill: #9aa0a6; }
+      .dark-kbd { font-size: 9px; font-weight: 600; fill: #e5e7eb; font-family: ui-monospace, Consolas, monospace; }
+    </style>
+  </defs>
+
+  <rect width="1680" height="1050" fill="#eef2f7"/>
+  <text x="40" y="54" class="title">UI 方向 A · 平静工具风</text>
+  <text x="40" y="82" class="subtitle">360px · F2/F8 统一键帽 · 官方入口改为 ↗ · 保持现有信息结构</text>
+
+  <!-- ==================== 1. LIGHT CARD ==================== -->
+  <rect x="30" y="112" width="520" height="858" rx="20" fill="#ffffff" stroke="#dbe3ee"/>
+  <text x="52" y="148" class="panel-title">① 展开态 · 浅色</text>
+  <text x="52" y="170" class="panel-sub">只收敛视觉，不改变卡片结构</text>
+
+  <rect x="110" y="190" width="360" height="650" rx="14" fill="#ffffff" stroke="#e6e8eb" filter="url(#shadow)"/>
+
+  <!-- header -->
+  <rect x="110" y="190" width="360" height="46" rx="14" fill="#f8fafc"/>
+  <rect x="110" y="222" width="360" height="14" fill="#f8fafc"/>
+  <rect x="122" y="202" width="24" height="22" rx="6" fill="#0b7dda"/>
+  <text x="129" y="217" font-size="10" font-weight="700" fill="#ffffff">K</text>
+  <text x="154" y="218" class="card-title">快捷键</text>
+  <rect x="418" y="202" width="22" height="22" rx="6" fill="#ffffff" stroke="#e2e8f0"/>
+  <text x="425" y="217" font-size="12" font-weight="700" fill="#64748b">−</text>
+  <rect x="444" y="202" width="22" height="22" rx="6" fill="#ffffff" stroke="#e2e8f0"/>
+  <text x="451" y="217" font-size="12" font-weight="700" fill="#64748b">×</text>
+
+  <!-- search -->
+  <rect x="120" y="246" width="236" height="32" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="132" y="266" class="search">搜索快捷键 / 功能…</text>
+  <rect x="362" y="246" width="30" height="32" rx="6" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="371" y="265" class="kbd" fill="#0b7dda">F2</text>
+  <rect x="398" y="246" width="58" height="32" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="409" y="265" class="btn">频率 ⇅</text>
+
+  <!-- recent -->
+  <text x="120" y="292" class="tiny">最近</text>
+  <rect x="148" y="280" width="88" height="20" rx="10" fill="#e8f2fd" stroke="#d6e7fb"/>
+  <text x="156" y="294" class="kbd" fill="#0b7dda">Ctrl+Shift+T</text>
+  <rect x="242" y="280" width="50" height="20" rx="10" fill="#e8f2fd" stroke="#d6e7fb"/>
+  <text x="250" y="294" class="kbd" fill="#0b7dda">Ctrl+W</text>
+  <rect x="298" y="280" width="50" height="20" rx="10" fill="#e8f2fd" stroke="#d6e7fb"/>
+  <text x="306" y="294" class="kbd" fill="#0b7dda">Ctrl+F</text>
+
+  <!-- context -->
+  <rect x="120" y="312" width="340" height="28" rx="7" fill="#f0f7ff" stroke="#d6e7fb"/>
+  <text x="130" y="330" font-size="8" font-weight="700" fill="#0b7dda">输入框</text>
+  <text x="164" y="330" font-size="8" fill="#475569">Ctrl+C 复制 · Ctrl+V 粘贴 · Ctrl+Z 撤销 · Ctrl+A 全选</text>
+
+  <!-- list -->
+  <!-- row 1 -->
+  <text x="126" y="366" class="kbd">Ctrl</text>
+  <rect x="152" y="355" width="18" height="15" rx="4" fill="#f1f5f9" stroke="#e2e8f0"/>
+  <text x="157" y="366" class="kbd">T</text>
+  <text x="180" y="363" class="item">新建标签页</text>
+  <text x="180" y="377" class="item-small">标签页</text>
+  <text x="448" y="366" class="count">12</text>
+  <line x1="120" y1="394" x2="460" y2="394" stroke="#f1f5f9"/>
+
+  <!-- row 2 -->
+  <text x="126" y="422" class="kbd">Ctrl</text>
+  <rect x="152" y="411" width="18" height="15" rx="4" fill="#f1f5f9" stroke="#e2e8f0"/>
+  <text x="157" y="422" class="kbd">W</text>
+  <text x="180" y="419" class="item">关闭当前标签页</text>
+  <text x="180" y="433" class="item-small">标签页 · 备选 Ctrl F4</text>
+  <text x="448" y="422" class="count">8</text>
+  <line x1="120" y1="450" x2="460" y2="450" stroke="#f1f5f9"/>
+
+  <!-- selected row -->
+  <rect x="118" y="458" width="344" height="50" rx="8" fill="#e8f2fd" stroke="#0b7dda"/>
+  <text x="126" y="478" class="kbd">Ctrl</text>
+  <rect x="152" y="467" width="30" height="15" rx="4" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="157" y="478" class="kbd">Shift</text>
+  <rect x="186" y="467" width="18" height="15" rx="4" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="191" y="478" class="kbd">T</text>
+  <text x="214" y="475" class="item">重新打开关闭的标签页</text>
+  <text x="214" y="489" class="item-small">标签页 · 推荐</text>
+  <text x="430" y="478" font-size="13" font-weight="700" fill="#0b7dda">↗</text>
+  <text x="450" y="478" class="count">5</text>
+  <line x1="120" y1="516" x2="460" y2="516" stroke="#f1f5f9"/>
+
+  <!-- row 4 -->
+  <text x="126" y="544" class="kbd">Ctrl</text>
+  <rect x="152" y="533" width="18" height="15" rx="4" fill="#f1f5f9" stroke="#e2e8f0"/>
+  <text x="157" y="544" class="kbd">F</text>
+  <text x="180" y="541" class="item">页内查找</text>
+  <text x="180" y="555" class="item-small">页面与查找 · 备选 F3</text>
+  <text x="448" y="544" class="count">3</text>
+  <line x1="120" y1="572" x2="460" y2="572" stroke="#f1f5f9"/>
+
+  <!-- row 5 -->
+  <text x="126" y="600" class="kbd">Ctrl</text>
+  <rect x="152" y="589" width="18" height="15" rx="4" fill="#f1f5f9" stroke="#e2e8f0"/>
+  <text x="157" y="600" class="kbd">L</text>
+  <text x="180" y="597" class="item">聚焦地址栏</text>
+  <text x="180" y="611" class="item-small">地址栏 · 备选 Alt D / F4</text>
+  <text x="448" y="600" class="count">2</text>
+  <line x1="120" y1="628" x2="460" y2="628" stroke="#f1f5f9"/>
+
+  <!-- row 6 -->
+  <text x="126" y="656" class="kbd">F3</text>
+  <text x="180" y="653" class="item">页内查找</text>
+  <text x="180" y="667" class="item-small">页面与查找</text>
+  <line x1="120" y1="684" x2="460" y2="684" stroke="#f1f5f9"/>
+
+  <!-- row 7 -->
+  <text x="126" y="712" class="kbd">Ctrl</text>
+  <rect x="152" y="701" width="30" height="15" rx="4" fill="#f1f5f9" stroke="#e2e8f0"/>
+  <text x="157" y="712" class="kbd">Shift</text>
+  <rect x="186" y="701" width="18" height="15" rx="4" fill="#f1f5f9" stroke="#e2e8f0"/>
+  <text x="191" y="712" class="kbd">B</text>
+  <text x="214" y="709" class="item">显示 / 隐藏收藏夹栏</text>
+  <text x="214" y="723" class="item-small">收藏与历史</text>
+
+  <!-- footer -->
+  <line x1="110" y1="786" x2="470" y2="786" stroke="#e6e8eb"/>
+  <text x="122" y="806" class="hint">↑↓ 选择 · Enter 记录</text>
+  <text x="122" y="821" class="tiny">F2 录入 · Alt+O 官方</text>
+  <rect x="362" y="796" width="44" height="22" rx="6" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="373" y="811" class="btn">刷新</text>
+  <rect x="412" y="796" width="44" height="22" rx="6" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="423" y="811" class="btn">恢复</text>
+
+  <text x="52" y="872" class="anno">F2 从图标改为键帽，和胶囊里的 F8 使用同一套语言。</text>
+  <text x="52" y="895" class="anno">官方入口改为选中时出现的 ↗；Alt+O 仍然可用。</text>
+  <text x="52" y="918" class="anno">行高保持紧凑，360px 宽度不增加。</text>
+  <text x="52" y="941" class="anno">页脚左提示、右操作，恢复按钮弱化为次要操作。</text>
+
+  <!-- ==================== 2. PILL / COMPONENTS ==================== -->
+  <rect x="580" y="112" width="520" height="858" rx="20" fill="#ffffff" stroke="#dbe3ee"/>
+  <text x="602" y="148" class="panel-title">② 胶囊与组件</text>
+  <text x="602" y="170" class="panel-sub">收起态、键帽、官方 ↗、焦点态</text>
+
+  <rect x="640" y="230" width="400" height="120" rx="14" fill="#f8fafc" stroke="#e6e8eb"/>
+  <text x="660" y="258" class="tiny">收起态（浅色）</text>
+
+  <!-- pill -->
+  <rect x="660" y="272" width="184" height="54" rx="14" fill="#0b7dda" filter="url(#shadow)"/>
+  <text x="676" y="303" font-size="13" font-weight="700" fill="#ffffff">K</text>
+  <text x="696" y="295" font-size="10.5" font-weight="700" fill="#ffffff" font-family="ui-monospace, Consolas, monospace">Ctrl+Shift+T</text>
+  <text x="696" y="310" font-size="8.5" fill="#dbeafe">重开标签</text>
+  <rect x="802" y="289" width="26" height="18" rx="4" fill="#ffffff" opacity="0.16" stroke="#ffffff" stroke-opacity="0.55"/>
+  <text x="807" y="302" font-size="8" font-weight="700" fill="#ffffff" font-family="ui-monospace, Consolas, monospace">F8</text>
+
+  <text x="660" y="350" class="tiny">F8 小键帽固定在右侧，不占第三行；点击胶囊仍然展开。</text>
+  <text x="660" y="368" class="tiny">悬停标题：F8 记下已试 · 点击查看。</text>
+
+  <!-- components -->
+  <text x="602" y="424" class="panel-title" font-size="14">键帽与状态</text>
+
+  <text x="620" y="456" class="tiny">F2</text>
+  <rect x="620" y="464" width="34" height="30" rx="5" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="632" y="483" class="kbd" fill="#0b7dda">F2</text>
+
+  <text x="686" y="456" class="tiny">F8</text>
+  <rect x="686" y="464" width="34" height="30" rx="5" fill="#0b7dda"/>
+  <text x="698" y="483" font-size="9" font-weight="700" fill="#ffffff">F8</text>
+
+  <text x="752" y="456" class="tiny">快捷键</text>
+  <rect x="752" y="464" width="32" height="30" rx="5" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="760" y="483" class="kbd">Ctrl</text>
+  <rect x="790" y="464" width="26" height="30" rx="5" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="797" y="483" class="kbd">W</text>
+
+  <text x="852" y="456" class="tiny">官方</text>
+  <text x="856" y="483" font-size="18" font-weight="700" fill="#0b7dda">↗</text>
+
+  <!-- selected row detail -->
+  <text x="602" y="538" class="panel-title" font-size="14">选中行</text>
+  <rect x="620" y="558" width="440" height="58" rx="8" fill="#e8f2fd" stroke="#0b7dda"/>
+  <text x="634" y="582" class="kbd">Ctrl</text>
+  <rect x="660" y="571" width="30" height="15" rx="4" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="665" y="582" class="kbd">Shift</text>
+  <rect x="694" y="571" width="18" height="15" rx="4" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="699" y="582" class="kbd">T</text>
+  <text x="722" y="579" class="item">重新打开关闭的标签页</text>
+  <text x="722" y="593" class="item-small">标签页 · 推荐</text>
+  <text x="1006" y="582" font-size="13" font-weight="700" fill="#0b7dda">↗</text>
+  <text x="1030" y="582" class="count">5</text>
+
+  <text x="602" y="650" class="anno">↗ 只在选中/悬停时出现；不挤压标题，不常驻。</text>
+  <text x="602" y="673" class="anno">F2 与 F8 都是键帽，视觉上属于同一套快捷键语言。</text>
+  <text x="602" y="696" class="anno">胶囊仍保持两行：组合键 + 短标题。</text>
+
+  <!-- tokens -->
+  <rect x="620" y="736" width="440" height="142" rx="10" fill="#f8fafc" stroke="#e6e8eb"/>
+  <text x="636" y="760" font-size="10" font-weight="700" fill="#475569">基础参数</text>
+  <text x="636" y="782" class="tiny">卡片 360px · 圆角 14 · 行圆角 8 · 键帽圆角 5</text>
+  <text x="636" y="800" class="tiny">主色 #0B7DDA · 选中底 #E8F2FD · 边框 #E6E8EB</text>
+  <text x="636" y="818" class="tiny">正文 10.5px · 辅助 8.5px · 键帽等宽 9px</text>
+  <text x="636" y="836" class="tiny">动效 120–160ms · 焦点环 1px 主色 · 不使用弹跳</text>
+
+  <text x="602" y="918" class="anno">维持现有密度，不新增面板或分组。</text>
+  <text x="602" y="941" class="anno">设计目标：安静、顺手、每天看不累。</text>
+
+  <!-- ==================== 3. DARK CARD ==================== -->
+  <rect x="1130" y="112" width="520" height="858" rx="20" fill="#ffffff" stroke="#dbe3ee"/>
+  <text x="1152" y="148" class="panel-title">③ 展开态 · 深色</text>
+  <text x="1152" y="170" class="panel-sub">同一套层级，不反转强调色</text>
+
+  <rect x="1210" y="190" width="360" height="650" rx="14" fill="#1f2023" stroke="#3a3d42" filter="url(#shadow)"/>
+
+  <!-- dark header -->
+  <rect x="1210" y="190" width="360" height="46" rx="14" fill="#26282c"/>
+  <rect x="1210" y="222" width="360" height="14" fill="#26282c"/>
+  <rect x="1222" y="202" width="24" height="22" rx="6" fill="#4da3ff"/>
+  <text x="1229" y="217" font-size="10" font-weight="700" fill="#0b1b2b">K</text>
+  <text x="1254" y="218" class="dark-title">快捷键</text>
+  <rect x="1518" y="202" width="22" height="22" rx="6" fill="#1f2023" stroke="#3a3d42"/>
+  <text x="1525" y="217" font-size="12" font-weight="700" fill="#9aa0a6">−</text>
+  <rect x="1544" y="202" width="22" height="22" rx="6" fill="#1f2023" stroke="#3a3d42"/>
+  <text x="1551" y="217" font-size="12" font-weight="700" fill="#9aa0a6">×</text>
+
+  <!-- dark search -->
+  <rect x="1220" y="246" width="236" height="32" rx="8" fill="#26282c" stroke="#3a3d42"/>
+  <text x="1232" y="266" class="dark-search">搜索快捷键 / 功能…</text>
+  <rect x="1462" y="246" width="30" height="32" rx="6" fill="#1f2023" stroke="#3a3d42"/>
+  <text x="1471" y="265" class="dark-kbd" fill="#4da3ff">F2</text>
+  <rect x="1498" y="246" width="58" height="32" rx="8" fill="#26282c" stroke="#3a3d42"/>
+  <text x="1509" y="265" class="btn" fill="#cbd5e1">频率 ⇅</text>
+
+  <!-- dark recent -->
+  <text x="1220" y="292" class="tiny" fill="#9aa0a6">最近</text>
+  <rect x="1248" y="280" width="88" height="20" rx="10" fill="#1e344d" stroke="#2f4e6e"/>
+  <text x="1256" y="294" class="dark-kbd" fill="#7fc0ff">Ctrl+Shift+T</text>
+  <rect x="1342" y="280" width="50" height="20" rx="10" fill="#1e344d" stroke="#2f4e6e"/>
+  <text x="1350" y="294" class="dark-kbd" fill="#7fc0ff">Ctrl+W</text>
+  <rect x="1398" y="280" width="50" height="20" rx="10" fill="#1e344d" stroke="#2f4e6e"/>
+  <text x="1406" y="294" class="dark-kbd" fill="#7fc0ff">Ctrl+F</text>
+
+  <!-- dark list selected -->
+  <rect x="1218" y="330" width="344" height="50" rx="8" fill="#1e344d" stroke="#4da3ff"/>
+  <text x="1226" y="350" class="dark-kbd">Ctrl</text>
+  <rect x="1252" y="339" width="30" height="15" rx="4" fill="#26282c" stroke="#4b5563"/>
+  <text x="1257" y="350" class="dark-kbd">Shift</text>
+  <rect x="1286" y="339" width="18" height="15" rx="4" fill="#26282c" stroke="#4b5563"/>
+  <text x="1291" y="350" class="dark-kbd">T</text>
+  <text x="1314" y="347" class="dark-item">重新打开关闭的标签页</text>
+  <text x="1314" y="361" class="dark-small">标签页 · 推荐</text>
+  <text x="1530" y="350" font-size="13" font-weight="700" fill="#7fc0ff">↗</text>
+  <text x="1548" y="350" class="count" fill="#7fc0ff">5</text>
+
+  <!-- dark rows -->
+  <text x="1226" y="404" class="dark-kbd">Ctrl</text>
+  <rect x="1252" y="393" width="18" height="15" rx="4" fill="#26282c" stroke="#4b5563"/>
+  <text x="1257" y="404" class="dark-kbd">W</text>
+  <text x="1280" y="401" class="dark-item">关闭当前标签页</text>
+  <text x="1280" y="415" class="dark-small">标签页 · 备选 Ctrl F4</text>
+  <text x="1548" y="404" class="count" fill="#7fc0ff">8</text>
+  <line x1="1220" y1="432" x2="1560" y2="432" stroke="#2a2d31"/>
+
+  <text x="1226" y="460" class="dark-kbd">Ctrl</text>
+  <rect x="1252" y="449" width="18" height="15" rx="4" fill="#26282c" stroke="#4b5563"/>
+  <text x="1257" y="460" class="dark-kbd">T</text>
+  <text x="1280" y="457" class="dark-item">新建标签页</text>
+  <text x="1280" y="471" class="dark-small">标签页</text>
+  <text x="1548" y="460" class="count" fill="#7fc0ff">12</text>
+  <line x1="1220" y1="488" x2="1560" y2="488" stroke="#2a2d31"/>
+
+  <text x="1226" y="516" class="dark-kbd">Ctrl</text>
+  <rect x="1252" y="505" width="30" height="15" rx="4" fill="#26282c" stroke="#4b5563"/>
+  <text x="1257" y="516" class="dark-kbd">Shift</text>
+  <rect x="1286" y="505" width="18" height="15" rx="4" fill="#26282c" stroke="#4b5563"/>
+  <text x="1291" y="516" class="dark-kbd">V</text>
+  <text x="1314" y="513" class="dark-item">粘贴为纯文本</text>
+  <text x="1314" y="527" class="dark-small">编辑</text>
+  <line x1="1220" y1="544" x2="1560" y2="544" stroke="#2a2d31"/>
+
+  <text x="1226" y="572" class="dark-kbd">Ctrl</text>
+  <rect x="1252" y="561" width="30" height="15" rx="4" fill="#26282c" stroke="#4b5563"/>
+  <text x="1257" y="572" class="dark-kbd">Shift</text>
+  <rect x="1286" y="561" width="18" height="15" rx="4" fill="#26282c" stroke="#4b5563"/>
+  <text x="1291" y="572" class="dark-kbd">Y</text>
+  <text x="1314" y="569" class="dark-item">打开集锦</text>
+  <text x="1314" y="583" class="dark-small">Edge 特色</text>
+  <line x1="1220" y1="600" x2="1560" y2="600" stroke="#2a2d31"/>
+
+  <text x="1226" y="628" class="dark-kbd">Ctrl</text>
+  <rect x="1252" y="617" width="18" height="15" rx="4" fill="#26282c" stroke="#4b5563"/>
+  <text x="1257" y="628" class="dark-kbd">F</text>
+  <text x="1280" y="625" class="dark-item">页内查找</text>
+  <text x="1280" y="639" class="dark-small">页面与查找 · 备选 F3</text>
+
+  <line x1="1210" y1="786" x2="1570" y2="786" stroke="#3a3d42"/>
+  <text x="1222" y="806" class="hint" fill="#9aa0a6">↑↓ 选择 · Enter 记录</text>
+  <text x="1222" y="821" class="tiny" fill="#9aa0a6">F2 录入 · Alt+O 官方</text>
+  <rect x="1462" y="796" width="44" height="22" rx="6" fill="#26282c" stroke="#3a3d42"/>
+  <text x="1473" y="811" class="btn" fill="#cbd5e1">刷新</text>
+  <rect x="1512" y="796" width="44" height="22" rx="6" fill="#26282c" stroke="#3a3d42"/>
+  <text x="1523" y="811" class="btn" fill="#cbd5e1">恢复</text>
+
+  <text x="1152" y="872" class="anno">深色只换表面色和文字色，强调色保持一致。</text>
+  <text x="1152" y="895" class="anno">选中行仍然用左侧强调和浅色底，不使用发光。</text>
+  <text x="1152" y="918" class="anno">官方 ↗ 在深色下使用同一主色。</text>
+  <text x="1152" y="941" class="anno">F8 只在胶囊上；展开态不重复显示。</text>
+
+  <rect x="30" y="990" width="1620" height="40" rx="12" fill="#0f172a"/>
+  <text x="50" y="1015" class="bottom">方向 A：360px · F2/F8 统一键帽 · 官方 ↗ · 结构不变 · 深色同层级。确认设计后再改代码。</text>
+</svg>
