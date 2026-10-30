@@ -1,5 +1,5 @@
 (() => {
-  const BUILD = '1.11.0';
+  const BUILD = '1.11.1';
   if (window.__ESC_CARD_OVERLAY__ === BUILD) return;
   if (window.__ESC_CARD_OVERLAY__) {
     // 扩展更新后，旧 content script 的上下文可能已经失效；清掉旧节点重新初始化
@@ -1518,7 +1518,8 @@
   function pickNextTipIndex() {
     const current = normalizeTipIndex(state.tipIndex);
     const currentId = SHORTCUTS[current]?.id;
-    const historySet = new Set(state.tipHistory.slice(0, 10));
+    const recentIds = new Set(state.tipHistory.slice(0, 15));
+    const historySet = new Set(state.tipHistory.slice(0, 20));
     const confirmedSet = new Set(state.confirmedTips);
     const categoryCounts = {};
     const recentCategories = new Set();
@@ -1534,9 +1535,16 @@
       if (item) recentCategories.add(item.cat);
     }
 
-    const candidates = SHORTCUTS
-      .map((item, index) => ({ item, index }))
-      .filter(({ item }) => item.id !== currentId)
+    let candidateItems = SHORTCUTS.filter((item) => (
+      item.id !== currentId && !recentIds.has(item.id)
+    ));
+
+    if (!candidateItems.length) {
+      candidateItems = SHORTCUTS.filter((item) => item.id !== currentId);
+    }
+
+    const candidates = candidateItems
+      .map((item) => ({ item, index: SHORTCUTS.indexOf(item) }))
       .map(({ item, index }) => {
         let score = Math.random() * 2;
 
